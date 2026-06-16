@@ -1,7 +1,7 @@
 -- ==========================================
--- BASE DE DATOS: PLANTCARE
+-- BASE DE DATOS: PETALIA (RootNode Technologies)
 -- ==========================================
-CREATE DATABASE petaliadb;
+CREATE DATABASE IF NOT EXISTS petaliadb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE petaliadb;
 
 

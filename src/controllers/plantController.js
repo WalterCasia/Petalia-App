@@ -1,5 +1,6 @@
 // Ruta: src/controllers/plantController.js
 const Plant = require('../models/Plant');
+const ExternalApiService = require('../services/ExternalApiService');
 
 const getAllPlants = async (req, res, next) => {
   try {
@@ -27,7 +28,34 @@ const getPlantById = async (req, res, next) => {
   }
 };
 
+const searchExternalPlants = async (req, res, next) => {
+  try {
+    const { q } = req.query;
+    if (!q) {
+      const error = new Error('Query parameter "q" is required');
+      error.status = 400;
+      return next(error);
+    }
+    const plants = await ExternalApiService.searchPlants(q);
+    res.json(plants);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getExternalPlantDetails = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const details = await ExternalApiService.getPlantDetails(id);
+    res.json(details);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getAllPlants,
-  getPlantById
+  getPlantById,
+  searchExternalPlants,
+  getExternalPlantDetails
 };

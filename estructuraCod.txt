@@ -1,0 +1,45 @@
+/plant-care-app
+│
+├── src/
+│   ├── config/
+│   │   ├── db.js                    # Configuración y conexión a MySQL.
+│   │   └── env.js                   # Carga de variables de entorno.
+│   │
+│   ├── controllers/                 # Clases que manejan la lógica de las peticiones HTTP.
+│   │   ├── AuthController.js        # Login y registro.
+│   │   ├── CatalogController.js     # -> AQUÍ VA TU API: Orquesta la búsqueda de plantas.
+│   │   ├── UserPlantController.js   # CRUD de la colección personal (incluye fotos y apodos).
+│   │   ├── HistoryController.js     # Registro de riegos (el "botón check").
+│   │   └── DashboardController.js   # Agrupación de datos para la pantalla de inicio.
+│   │
+│   ├── middlewares/                 # Funciones de intercepción de peticiones.
+│   │   ├── authMiddleware.js        # Protección de rutas (validación de sesión/token).
+│   │   └── uploadMiddleware.js      # Procesamiento de las fotos de las plantas.
+│   │
+│   ├── models/                      # Clases que encapsulan las consultas SQL (Encapsulamiento).
+│   │   ├── User.js                  # Consultas a la tabla de usuarios.
+│   │   ├── Plant.js                 # -> AQUÍ VA TU API: Métodos como Plant.getAll() o Plant.findById().
+│   │   ├── UserPlant.js             # Consultas de las plantas específicas del usuario.
+│   │   └── CareHistory.js           # Consultas del historial de riegos.
+│   │
+│   ├── routes/                      # Definición de los endpoints y vinculación con controladores.
+│   │   ├── authRoutes.js
+│   │   ├── catalogRoutes.js         # -> AQUÍ VA TU API: Define los endpoints como GET /api/plants.
+│   │   ├── userPlantRoutes.js
+│   │   ├── historyRoutes.js
+│   │   └── dashboardRoutes.js
+│   │
+│   ├── services/                    # Lógica compleja aislada de los controladores.
+│   │   ├── NotificationService.js   # Emisión de alertas de riego.
+│   │   ├── CalendarService.js       # Sincronización de fechas.
+│   │   └── ExternalApiService.js    # (Opcional) Si en el futuro extraes datos de una API externa.
+│   │
+│   ├── jobs/                        # Tareas automatizadas.
+│   │   └── cronJobs.js              # Ciclos que revisan horas de riego pendientes.
+│   │
+│   └── app.js                       # Instancia principal de Express y middlewares globales.
+│
+├── uploads/                         # Almacenamiento local de las fotos capturadas.
+├── .env                             # Credenciales (rutas, puertos, contraseñas de MySQL).
+├── package.json                     # Registro de dependencias de Node.js.
+└── server.js                        # Archivo de arranque que levanta el puerto.

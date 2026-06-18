@@ -1,44 +1,27 @@
+// Ruta: src/utils/helpers.js
 
-function formatDate(date) {
-  if (!date) return null;
-  return new Date(date).toISOString().split("T")[0];
-}
+/**
+ * Formats a database date to a standard string format.
+ * @param {Date|string} date 
+ * @returns {string}
+ */
+const formatDate = (date) => {
+  if (!date) return '';
+  return new Date(date).toISOString().split('T')[0];
+};
 
-function addDays(date, days) {
-  const result = new Date(date);
-  result.setDate(result.getDate() + Number(days));
-  return result;
-}
-
-function addHours(date, hours) {
-  const result = new Date(date);
-  result.setHours(result.getHours() + Number(hours));
-  return result;
-}
-
-function getWateringStatus(nextWateringDate) {
-  const now = new Date();
-
-  // The DB stores DATE, so we treat the scheduled date as 00:00.
-  const scheduled = new Date(nextWateringDate);
-  scheduled.setHours(0, 0, 0, 0);
-
-  const alertLimit = addHours(scheduled, 4);
-
-  if (now < scheduled) {
-    return "OK";
-  }
-
-  if (now >= scheduled && now <= alertLimit) {
-    return "ALERT";
-  }
-
-  return "LATE";
-}
+/**
+ * Validates whether an email format is correct.
+ * @param {string} email 
+ * @returns {boolean}
+ */
+const isValidEmail = (email) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
 
 module.exports = {
   formatDate,
-  addDays,
-  addHours,
-  getWateringStatus
+  isValidEmail
 };
+

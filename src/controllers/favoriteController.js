@@ -1,6 +1,6 @@
 // Ruta: src/controllers/favoriteController.js
 const Favorite = require('../models/Favorite');
-const Plant = require('../models/Plant');
+const UserPlant = require('../models/UserPlant');
 
 /**
  * Marca una planta como favorita para el usuario autenticado.
@@ -8,25 +8,25 @@ const Plant = require('../models/Plant');
 exports.addFavorite = async (req, res, next) => {
     try {
         const userId = req.user.id_usuario || req.user.id;
-        const { plant_id } = req.body;
+        const { id_planta_usuario } = req.body;
 
-        if (!plant_id) {
-            return res.status(400).json({ message: 'El plant_id es obligatorio' });
+        if (!id_planta_usuario) {
+            return res.status(400).json({ message: 'El id_planta_usuario es obligatorio' });
         }
 
-        // Validar existencia de la planta en el catálogo general
-        const plantExists = await Plant.findById(plant_id);
+        // Validar existencia de la planta en la colección del usuario
+        const plantExists = await UserPlant.findById(id_planta_usuario);
         if (!plantExists) {
-            return res.status(404).json({ message: 'La planta no existe en el catálogo general' });
+            return res.status(404).json({ message: 'La planta no existe en tu colección' });
         }
 
         // Evitar registros duplicados de favoritos para un mismo usuario
-        const alreadyFavorite = await Favorite.exists(userId, plant_id);
+        const alreadyFavorite = await Favorite.exists(userId, id_planta_usuario);
         if (alreadyFavorite) {
             return res.status(400).json({ message: 'Esta planta ya está en tus favoritos' });
         }
 
-        const newFavorite = await Favorite.addFavorite(userId, plant_id);
+        const newFavorite = await Favorite.addFavorite(userId, id_planta_usuario);
         return res.status(201).json({
             message: 'Planta agregada a favoritos exitosamente',
             data: newFavorite
@@ -42,7 +42,7 @@ exports.addFavorite = async (req, res, next) => {
 exports.removeFavorite = async (req, res, next) => {
     try {
         const userId = req.user.id_usuario || req.user.id;
-        const { plantId } = req.params;
+        const { plantId } = req.params; // This is the user plant ID
 
         if (!plantId) {
             return res.status(400).json({ message: 'El plantId es obligatorio' });
@@ -70,9 +70,7 @@ exports.getfavoritos = async (req, res, next) => {
     try {
         const userId = req.user.id_usuario || req.user.id;
         const favoritos = await Favorite.getUserfavoritos(userId);
-        return res.status(200).json({
-            data: favoritos
-        });
+        return res.status(200).json(favoritos);
     } catch (error) {
         return next(error);
     }

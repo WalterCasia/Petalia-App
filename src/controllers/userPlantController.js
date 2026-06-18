@@ -8,26 +8,35 @@ const Plant = require('../models/Plant');
 exports.addUserPlant = async (req, res, next) => {
     try {
         const userId = req.user.id_usuario || req.user.id;
-        const { plant_id, custom_name, acquired_at, last_watered_at, is_favorite, status } = req.body;
+        const { id_catalogo, nombre_personalizado, fecha_adquisicion, fecha_ultimo_riego, favorita, estado } = req.body;
 
-        if (!plant_id) {
-            return res.status(400).json({ message: 'El plant_id es obligatorio' });
+        if (!id_catalogo) {
+            return res.status(400).json({ message: 'El id_catalogo es obligatorio' });
         }
 
         // Reutilizar el modelo Plant del catálogo para validar existencia
-        const plantExists = await Plant.findById(plant_id);
+        const plantExists = await Plant.findById(id_catalogo);
         if (!plantExists) {
             return res.status(404).json({ message: 'La planta no existe en el catálogo general' });
         }
 
+        // Handle uploaded photo or assign default catalog image
+        let imagen_url = null;
+        if (req.file) {
+            imagen_url = `/uploads/${req.file.filename}`;
+        } else {
+            imagen_url = plantExists.imagen_url;
+        }
+
         const newUserPlant = await UserPlant.create({
-            user_id: userId,
-            plant_id,
-            custom_name,
-            acquired_at,
-            last_watered_at,
-            is_favorite: is_favorite !== undefined ? is_favorite : false,
-            status: status || 'Activa'
+            id_usuario: userId,
+            id_catalogo: parseInt(id_catalogo, 10),
+            nombre_personalizado,
+            fecha_adquisicion,
+            fecha_ultimo_riego,
+            favorita: favorita !== undefined ? (favorita === 'true' || favorita === true || favorita === 1) : false,
+            estado: estado || 'Activa',
+            imagen_url
         });
 
         return res.status(201).json({
@@ -46,9 +55,7 @@ exports.getplantas_usuario = async (req, res, next) => {
     try {
         const userId = req.user.id_usuario || req.user.id;
         const collection = await UserPlant.findAllByUser(userId);
-        return res.status(200).json({
-            data: collection
-        });
+        return res.status(200).json(collection);
     } catch (error) {
         return next(error);
     }
@@ -68,13 +75,11 @@ exports.getUserPlantById = async (req, res, next) => {
         }
 
         // Garantizar que cada usuario solo acceda a sus propios registros
-        if (userPlant.user_id !== userId) {
+        if (userPlant.user_id !== userId && userPlant.id_usuario !== userId) {
             return res.status(403).json({ message: 'No tienes permisos para ver esta planta' });
         }
 
-        return res.status(200).json({
-            data: userPlant
-        });
+        return res.status(200).json(userPlant);
     } catch (error) {
         return next(error);
     }
@@ -94,11 +99,17 @@ exports.updateUserPlant = async (req, res, next) => {
         }
 
         // Garantizar que cada usuario solo modifique sus propios registros
-        if (userPlant.user_id !== userId) {
+        if (userPlant.user_id !== userId && userPlant.id_usuario !== userId) {
             return res.status(403).json({ message: 'No tienes permisos para modificar esta planta' });
         }
 
-        const updatedUserPlant = await UserPlant.update(id, req.body);
+        // Handle uploaded photo if exists
+        let updateData = { ...req.body };
+        if (req.file) {
+            updateData.imagen_url = `/uploads/${req.file.filename}`;
+        }
+
+        const updatedUserPlant = await UserPlant.update(id, updateData);
         return res.status(200).json({
             message: 'Planta de la colección actualizada exitosamente',
             data: updatedUserPlant
@@ -122,7 +133,7 @@ exports.deleteUserPlant = async (req, res, next) => {
         }
 
         // Garantizar que cada usuario solo elimine sus propios registros
-        if (userPlant.user_id !== userId) {
+        if (userPlant.user_id !== userId && userPlant.id_usuario !== userId) {
             return res.status(403).json({ message: 'No tienes permisos para eliminar esta planta' });
         }
 

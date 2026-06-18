@@ -7,6 +7,8 @@ const authMiddleware = require("../middlewares/authMiddleware");
 
 const {
   checkCare,
+  regarPlant,
+  abonarPlant,
   getHistory,
   getCalendar,
   getWateringAlerts,
@@ -14,16 +16,20 @@ const {
   readNotification
 } = require("../controllers/careController");
 
-router.post("/:idPlantaUsuario/check", authMiddleware, checkCare);
+// Protect all care routes
+router.use(authMiddleware);
 
-router.get("/history", authMiddleware, getHistory);
+// Endpoints required by the frontend
+router.get("/historial", getHistory);
+router.post("/plantas/:id/regar", regarPlant);
+router.post("/plantas/:id/abonar", abonarPlant);
 
-router.get("/calendar", authMiddleware, getCalendar);
-
-router.get("/alerts", authMiddleware, getWateringAlerts);
-
-router.get("/notifications", authMiddleware, getNotifications);
-
-router.patch("/notifications/:idNotificacion/read", authMiddleware, readNotification);
+// Endpoints for scheduled jobs or extra features
+router.post("/:idPlantaUsuario/check", checkCare);
+router.get("/history", getHistory); // compatibility alias
+router.get("/calendar", getCalendar);
+router.get("/alerts", getWateringAlerts);
+router.get("/notifications", getNotifications);
+router.patch("/notifications/:idNotificacion/read", readNotification);
 
 module.exports = router;

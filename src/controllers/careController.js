@@ -4,7 +4,8 @@ const {
   createCareHistory,
   getCareHistoryByUser,
   verifyPlantBelongsToUser,
-  updateLastWateringDate
+  updateLastWateringDate,
+  updateLastFertilizingDate
 } = require("../models/CareHistory");
 
 const {
@@ -62,6 +63,8 @@ async function checkCare(req, res, next) {
         idPlantaUsuario,
         plant.frecuencia_riego_dias
       );
+    } else if (tipo_cuidado === "Fertilizacion") {
+      await updateLastFertilizingDate(idPlantaUsuario);
     }
 
     return res.status(201).json({
@@ -75,15 +78,85 @@ async function checkCare(req, res, next) {
   }
 }
 
+async function regarPlant(req, res, next) {
+  try {
+    const idUsuario = getUserId(req);
+    const { id } = req.params;
+    const idPlantaUsuario = id;
+
+    const plant = await verifyPlantBelongsToUser(idPlantaUsuario, idUsuario);
+    if (!plant) {
+      return res.status(404).json({
+        error: "La planta no existe o no pertenece al usuario."
+      });
+    }
+
+    const idHistorial = await createCareHistory(
+      idPlantaUsuario,
+      "Riego",
+      "Riego manual registrado"
+    );
+
+    await updateLastWateringDate(idPlantaUsuario);
+    await markTodayWateringAsCompleted(idPlantaUsuario);
+
+    const nextWateringDate = await createNextWateringDate(
+      idPlantaUsuario,
+      plant.frecuencia_riego_dias
+    );
+
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    return res.status(200).json({
+      message: "Riego registrado correctamente.",
+      id_historial: idHistorial,
+      fecha_ultimo_riego: todayStr,
+      proximo_riego: nextWateringDate
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function abonarPlant(req, res, next) {
+  try {
+    const idUsuario = getUserId(req);
+    const { id } = req.params;
+    const idPlantaUsuario = id;
+
+    const plant = await verifyPlantBelongsToUser(idPlantaUsuario, idUsuario);
+    if (!plant) {
+      return res.status(404).json({
+        error: "La planta no existe o no pertenece al usuario."
+      });
+    }
+
+    const idHistorial = await createCareHistory(
+      idPlantaUsuario,
+      "Fertilizacion",
+      "Abono manual registrado"
+    );
+
+    await updateLastFertilizingDate(idPlantaUsuario);
+
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    return res.status(200).json({
+      message: "Abono registrado correctamente.",
+      id_historial: idHistorial,
+      fecha_ultimo_abono: todayStr
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 async function getHistory(req, res, next) {
   try {
     const idUsuario = getUserId(req);
     const history = await getCareHistoryByUser(idUsuario);
 
-    return res.status(200).json({
-      total: history.length,
-      historial: history
-    });
+    return res.status(200).json(history);
   } catch (error) {
     next(error);
   }
@@ -169,6 +242,8 @@ async function readNotification(req, res, next) {
 
 module.exports = {
   checkCare,
+  regarPlant,
+  abonarPlant,
   getHistory,
   getCalendar,
   getWateringAlerts,

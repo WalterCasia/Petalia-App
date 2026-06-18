@@ -31,7 +31,6 @@ document.addEventListener('DOMContentLoaded', () => {
   let activeFilter = 'all';
   let searchQuery = '';
   let selectedCatalogItem = null;
-  let mockMode = false;
   let tempPhotoUrl = null;
 
   // --- ELEMENTOS DEL DOM ---
@@ -41,14 +40,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const registerForm = document.getElementById('register-form');
   const toRegisterLink = document.getElementById('to-register');
   const toLoginLink = document.getElementById('to-login');
-  
+
   const userDisplayName = document.getElementById('user-display-name');
   const profileName = document.getElementById('profile-name');
   const userAvatarInitial = document.getElementById('user-avatar-initial');
   const logoutBtn = document.getElementById('logout-btn');
   const openAddModalBtn = document.getElementById('open-add-modal-btn');
   const searchPlantsInput = document.getElementById('search-plants');
-  
+
   const statTotalCount = document.getElementById('stat-total-count');
   const plantsGrid = document.getElementById('plants-grid');
   const alertsList = document.getElementById('alerts-list');
@@ -63,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const riegoNextTarget = document.getElementById('riego-next-target');
   const riegoTimelineNodeTime = document.getElementById('riego-timeline-node-time');
   // (floating bot panel references are initialized after DOM is ready below)
-  
+
   // Modal agregar planta
   const addPlantModal = document.getElementById('add-plant-modal');
   const addPlantForm = document.getElementById('add-plant-form');
@@ -79,7 +78,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const photoPreview = document.getElementById('photo-preview');
   const photoPreviewWrapper = document.getElementById('photo-preview-wrapper');
   const removePhotoBtn = document.getElementById('remove-photo-btn');
-  const plantFrequency = document.getElementById('plant-frequency');
 
   // Plant detail modal elements
   const plantDetailModal = document.getElementById('plant-detail-modal');
@@ -100,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(updateTimeDisplay, 60000); // Actualiza la hora cada minuto
     initNotificationDropdown();
     initScheduleModal();
-    
+
     if (token) {
       showApp();
     } else {
@@ -122,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
     gridDays.innerHTML = '';
     detailedList.innerHTML = '';
     // enforce week view layout
-    gridDays.classList.remove('month-view','year-view');
+    gridDays.classList.remove('month-view', 'year-view');
     gridDays.classList.add('week-view');
     gridDays.style.gridTemplateColumns = 'repeat(7, 1fr)';
 
@@ -132,12 +130,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const diffToMonday = (day === 0) ? -6 : 1 - day; // monday as first
     const monday = new Date(current.getTime());
     monday.setDate(current.getDate() + diffToMonday);
-    monday.setHours(0,0,0,0);
+    monday.setHours(0, 0, 0, 0);
 
     const titleSpan = document.getElementById('calendar-current-month-year');
     if (titleSpan) titleSpan.textContent = `Semana de ${formatDate(monday.toISOString())}`;
 
-    const daysOfWeek = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+    const daysOfWeek = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
     for (let i = 0; i < 7; i++) {
       const cellDate = new Date(monday.getTime());
       cellDate.setDate(monday.getDate() + i);
@@ -155,13 +153,13 @@ document.addEventListener('DOMContentLoaded', () => {
       targetPlants.forEach(plant => {
         // check history and scheduledEvents
         historyLogs.forEach(log => {
-          const logDate = new Date(log.fecha_realizada); logDate.setHours(0,0,0,0);
+          const logDate = new Date(log.fecha_realizada); logDate.setHours(0, 0, 0, 0);
           if (logDate.getTime() === cellDate.getTime() && log.id_planta_usuario === plant.id_planta_usuario) {
             dayEvents.push({ type: log.tipo_cuidado === 'Riego' ? 'water' : 'abono', label: `${log.tipo_cuidado} ${plant.nombre_personalizado}` });
           }
         });
         scheduledEvents.forEach(se => {
-          const evDate = new Date(se.dateISO); evDate.setHours(0,0,0,0);
+          const evDate = new Date(se.dateISO); evDate.setHours(0, 0, 0, 0);
           if (evDate.getTime() === cellDate.getTime() && se.plantId === plant.id_planta_usuario) {
             dayEvents.push({ type: se.type, label: `${se.type} ${plant.nombre_personalizado}` });
           }
@@ -197,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // render 12 month tiles
     // enforce year view layout
-    gridDays.classList.remove('month-view','week-view');
+    gridDays.classList.remove('month-view', 'week-view');
     gridDays.classList.add('year-view');
     gridDays.style.gridTemplateColumns = 'repeat(auto-fit, minmax(140px, 1fr))';
 
@@ -226,11 +224,11 @@ document.addEventListener('DOMContentLoaded', () => {
   function showToast(title, msg, type = 'info') {
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-    
+
     let icon = 'info';
     if (type === 'success') icon = 'check_circle';
     if (type === 'warning') icon = 'warning';
-    
+
     toast.innerHTML = `
       <span class="material-symbols-rounded toast-icon ${type}">${icon}</span>
       <div class="toast-content">
@@ -323,12 +321,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function createPlantCard(plant) {
-    const catalog = getCatalogItem(plant.id_catalogo);
+    const catalog = getCatalogItem(plant);
     const isWaterCrit = getDaysUntilWatering(plant) <= 0;
     const isAbonoCrit = getDaysUntilAbono(plant) <= 0;
     const daysLeftRiego = getDaysUntilWatering(plant);
     const daysLeftAbono = getDaysUntilAbono(plant);
-    const imgUrl = plant.imagen_url || catalog.imagen_url;
+    const imgUrl = plant.catalog_imagen_url || plant.imagen_url || catalog.imagen_url;
 
     const card = document.createElement('div');
     card.className = `plant-card-ref ${isWaterCrit ? 'card-critico' : ''}`;
@@ -385,22 +383,22 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       </div>
     `;
-      // Abrir detalle al hacer click en la tarjeta (si no se hizo click en un botón)
-      card.addEventListener('click', (e) => {
-        if (e.target.closest('button') || e.target.closest('a')) return;
-        openPlantDetail(plant.id_planta_usuario);
-      });
+    // Abrir detalle al hacer click en la tarjeta (si no se hizo click en un botón)
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('button') || e.target.closest('a')) return;
+      openPlantDetail(plant.id_planta_usuario);
+    });
 
-      return card;
+    return card;
   }
 
   // Open plant detail modal
   function openPlantDetail(id) {
     const plant = plants.find(p => p.id_planta_usuario === id);
     if (!plant || !plantDetailModal) return;
-    const catalog = getCatalogItem(plant.id_catalogo);
+    const catalog = getCatalogItem(plant);
     detailName.textContent = plant.nombre_personalizado;
-    detailImage.src = plant.imagen_url || catalog.imagen_url;
+    detailImage.src = plant.catalog_imagen_url || plant.imagen_url || catalog.imagen_url;
     detailSpecies.textContent = `Especie: ${catalog.nombre_comun} (${catalog.nombre_cientifico})`;
     detailAcquired.textContent = `Adquirida: ${plant.fecha_adquisicion}`;
     detailLastWatered.textContent = `Último riego: ${plant.fecha_ultimo_riego}`;
@@ -408,6 +406,24 @@ document.addEventListener('DOMContentLoaded', () => {
     detailFrequency.textContent = `Frecuencia de riego: cada ${freq} días`;
     const days = getDaysUntilWatering(plant);
     detailNextWatering.textContent = days <= 0 ? 'Próximo riego: Hoy' : `Próximo riego: en ${days} días`;
+
+    const descriptionEl = document.getElementById('detail-description');
+    const careGuidesEl = document.getElementById('detail-care-guides');
+    const annexContainer = document.getElementById('detail-annex-container');
+    const annexImg = document.getElementById('detail-annex-image');
+
+    if (descriptionEl) descriptionEl.textContent = `Descripción: ${catalog.descripcion || 'Sin descripción disponible.'}`;
+    if (careGuidesEl) careGuidesEl.textContent = `Cuidados Básicos: ${catalog.cuidados_basicos || 'Sin cuidados específicos sugeridos.'}`;
+
+    if (annexContainer && annexImg) {
+      if (plant.imagen_url && plant.imagen_url !== plant.catalog_imagen_url && plant.imagen_url !== catalog.imagen_url) {
+        annexImg.src = plant.imagen_url;
+        annexContainer.classList.remove('hidden');
+      } else {
+        annexContainer.classList.add('hidden');
+      }
+    }
+
     plantDetailModal.classList.add('show');
   }
 
@@ -423,6 +439,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const icon = sidebarToggle.querySelector('span');
       if (appSidebar.classList.contains('collapsed')) icon.textContent = 'chevron_right';
       else icon.textContent = 'menu';
+    });
+  }
+
+  const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+  if (mobileMenuBtn && appSidebar) {
+    mobileMenuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      appSidebar.classList.toggle('collapsed');
     });
   }
 
@@ -495,12 +519,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     plants.forEach(plant => {
-      const catalog = getCatalogItem(plant.id_catalogo);
+      const catalog = getCatalogItem(plant);
       const daysRiego = getDaysUntilWatering(plant);
       const daysAbono = getDaysUntilAbono(plant);
       const isWaterCrit = daysRiego <= 0;
       const isAbonoCrit = daysAbono <= 0;
-      const imgUrl = plant.imagen_url || catalog.imagen_url;
+      const imgUrl = plant.catalog_imagen_url || plant.imagen_url || catalog.imagen_url;
       const riegoPercent = Math.max(0, Math.min(100, Math.round(((catalog.frecuencia_riego_dias - Math.max(0, daysRiego)) / catalog.frecuencia_riego_dias) * 100)));
       const abonoPercent = Math.max(0, Math.min(100, Math.round((((catalog.abono_frecuencia_dias || 30) - Math.max(0, daysAbono)) / (catalog.abono_frecuencia_dias || 30)) * 100)));
 
@@ -607,12 +631,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     sortedPlants.forEach(plant => {
-      const catalog = getCatalogItem(plant.id_catalogo);
+      const catalog = getCatalogItem(plant);
       const daysLeft = getDaysUntilWatering(plant);
       const totalDays = plant.frecuencia_riego_dias || catalog.frecuencia_riego_dias;
-      
+
       const percent = Math.max(0, Math.min(100, Math.round((daysLeft / totalDays) * 100)));
-      
+
       let color = '#4caf50';
       if (percent <= 20) {
         color = '#d84315';
@@ -620,7 +644,7 @@ document.addEventListener('DOMContentLoaded', () => {
         color = '#ff9800';
       }
 
-      const imgUrl = plant.imagen_url || catalog.imagen_url;
+      const imgUrl = plant.catalog_imagen_url || plant.imagen_url || catalog.imagen_url;
 
       const row = document.createElement('div');
       row.className = 'riego-plant-row';
@@ -663,7 +687,7 @@ document.addEventListener('DOMContentLoaded', () => {
     view: 'month' // 'month' | 'week' | 'year'
   };
 
-  const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const MONTH_NAMES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
   function renderCalendarioMensualSection() {
     const filterSelect = document.getElementById('calendar-plant-filter');
     if (!filterSelect) return;
@@ -740,7 +764,7 @@ document.addEventListener('DOMContentLoaded', () => {
     gridDays.innerHTML = '';
     detailedList.innerHTML = '';
     // enforce month view class and columns
-    gridDays.classList.remove('week-view','year-view');
+    gridDays.classList.remove('week-view', 'year-view');
     gridDays.classList.add('month-view');
     gridDays.style.gridTemplateColumns = 'repeat(7, 1fr)';
 
@@ -766,7 +790,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const todayDate = new Date();
-    todayDate.setHours(0,0,0,0);
+    todayDate.setHours(0, 0, 0, 0);
 
     // update title
     const titleSpan = document.getElementById('calendar-current-month-year');
@@ -775,7 +799,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Renderizar días del mes
     for (let day = 1; day <= totalDays; day++) {
       const cellDate = new Date(year, month, day);
-      cellDate.setHours(0,0,0,0);
+      cellDate.setHours(0, 0, 0, 0);
 
       const cell = document.createElement('div');
       cell.className = 'calendar-day-cell';
@@ -796,13 +820,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const dayEvents = [];
 
       targetPlants.forEach(plant => {
-        const catalog = getCatalogItem(plant.id_catalogo);
+        const catalog = getCatalogItem(plant);
 
         // 1. Historial (Eventos pasados)
         historyLogs.forEach(log => {
           if (log.id_planta_usuario === plant.id_planta_usuario) {
             const logDate = new Date(log.fecha_realizada);
-            logDate.setHours(0,0,0,0);
+            logDate.setHours(0, 0, 0, 0);
             if (logDate.getTime() === cellDate.getTime()) {
               dayEvents.push({
                 plant,
@@ -817,7 +841,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 2. Proyecciones futuras
         // Riego
         const lastWater = new Date(plant.fecha_ultimo_riego);
-        lastWater.setHours(0,0,0,0);
+        lastWater.setHours(0, 0, 0, 0);
         let nextWater = new Date(lastWater.getTime());
         for (let i = 1; i <= 5; i++) {
           nextWater.setDate(nextWater.getDate() + catalog.frecuencia_riego_dias);
@@ -835,7 +859,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Abono
         const lastAbono = new Date(plant.fecha_ultimo_abono || plant.fecha_adquisicion);
-        lastAbono.setHours(0,0,0,0);
+        lastAbono.setHours(0, 0, 0, 0);
         let nextAbono = new Date(lastAbono.getTime());
         const abonoFreq = catalog.abono_frecuencia_dias || 30;
         for (let i = 1; i <= 2; i++) {
@@ -856,12 +880,12 @@ document.addEventListener('DOMContentLoaded', () => {
       // Añadir eventos programados manualmente
       scheduledEvents.forEach(se => {
         const evDate = new Date(se.dateISO);
-        evDate.setHours(0,0,0,0);
+        evDate.setHours(0, 0, 0, 0);
         if (evDate.getTime() === cellDate.getTime()) {
           dayEvents.push({
             plant: plants.find(p => p.id_planta_usuario === se.plantId) || { nombre_personalizado: 'Desconocida' },
             type: se.type === 'water' ? 'water' : 'abono',
-            label: `${se.type === 'water' ? 'Riego' : 'Abono'} de ${ (plants.find(p => p.id_planta_usuario === se.plantId) || {}).nombre_personalizado }` + (se.notes ? ` - ${se.notes}` : ''),
+            label: `${se.type === 'water' ? 'Riego' : 'Abono'} de ${(plants.find(p => p.id_planta_usuario === se.plantId) || {}).nombre_personalizado}` + (se.notes ? ` - ${se.notes}` : ''),
             isPast: false,
             isScheduled: true
           });
@@ -914,13 +938,13 @@ document.addEventListener('DOMContentLoaded', () => {
       : plants.filter(p => p.id_planta_usuario === parseInt(filterVal));
 
     targetPlantsForList.forEach(plant => {
-      const catalog = getCatalogItem(plant.id_catalogo);
+      const catalog = getCatalogItem(plant);
 
       // Próximo Riego
       const lastWater = new Date(plant.fecha_ultimo_riego);
       const nextWater = new Date(lastWater.getTime());
       nextWater.setDate(nextWater.getDate() + catalog.frecuencia_riego_dias);
-      nextWater.setHours(0,0,0,0);
+      nextWater.setHours(0, 0, 0, 0);
 
       eventsList.push({
         plant,
@@ -934,7 +958,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const lastAbono = new Date(plant.fecha_ultimo_abono || plant.fecha_adquisicion);
       const nextAbono = new Date(lastAbono.getTime());
       nextAbono.setDate(nextAbono.getDate() + (catalog.abono_frecuencia_dias || 30));
-      nextAbono.setHours(0,0,0,0);
+      nextAbono.setHours(0, 0, 0, 0);
 
       eventsList.push({
         plant,
@@ -962,9 +986,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const dateStr = formatDate(ev.date.toISOString());
 
       let dateDisplay = `${dayName} (${dateStr})`;
-      if (ev.type === 'abono') {
-        dateDisplay = `${dateStr} (${dateStr})`;
-      }
 
       item.innerHTML = `
         <div class="calendar-task-icon-circle ${ev.type}">
@@ -1036,13 +1057,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Expose function to open modal with date
-    window.openScheduleModal = function(dateObj) {
+    window.openScheduleModal = function (dateObj) {
       populatePlants();
       loadScheduledEvents();
       const iso = new Date(dateObj.getTime());
       const yyyy = iso.getFullYear();
-      const mm = String(iso.getMonth()+1).padStart(2,'0');
-      const dd = String(iso.getDate()).padStart(2,'0');
+      const mm = String(iso.getMonth() + 1).padStart(2, '0');
+      const dd = String(iso.getDate()).padStart(2, '0');
       const dateStr = `${yyyy}-${mm}-${dd}`;
       dateInput.value = dateStr;
       modal.classList.add('show');
@@ -1099,14 +1120,8 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('¡Sesión Iniciada!', 'Bienvenido de vuelta a Petalia.', 'success');
         showApp();
       } catch (err) {
-        console.warn('Fallo de conexión backend, modo simulación activado.', err);
-        // Simulación local de Login
-        if (email && password) {
-          mockMode = true;
-          saveSession('mock-jwt-token-123456', { nombre: email.split('@')[0], email });
-          showToast('Modo Simulación', 'Conectado a sesión local simulada.', 'info');
-          showApp();
-        }
+        console.error('Error al iniciar sesión:', err.message);
+        showToast('Error de Acceso', 'Credenciales incorrectas o servidor no disponible.', 'warning');
       }
     });
   }
@@ -1128,15 +1143,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!response.ok) throw new Error('Error al registrar usuario');
 
         const data = await response.json();
-        saveSession(data.token || 'mock-jwt-registered', { nombre, email });
+        saveSession(data.token, { nombre, email });
         showToast('Registro Exitoso', 'Tu cuenta de Petalia ha sido creada.', 'success');
         showApp();
       } catch (err) {
-        console.warn('Fallo de conexión backend para registro, simulando local.', err);
-        mockMode = true;
-        saveSession('mock-jwt-registered', { nombre, email });
-        showToast('Registro Simulado', 'Cuenta guardada en almacenamiento local.', 'success');
-        showApp();
+        console.error('Error al registrar:', err.message);
+        showToast('Error de Registro', 'No se pudo crear la cuenta. Intente con otro correo.', 'warning');
       }
     });
   }
@@ -1167,7 +1179,7 @@ document.addEventListener('DOMContentLoaded', () => {
     'Para un jardín sano, evita el exceso de riego. La mayoría de las plantas prefieren secarse entre riegos.',
     '¡Fertiliza tus plantas cada 30 días en primavera para maximizar su crecimiento! 🌱',
     'La temperatura ideal para la mayoría de plantas exóticas es entre 18°C y 28°C.',
-    'Limpia las hojas con un paño húmedo mensualmente para optimizar la fotosíntesis.'  
+    'Limpia las hojas con un paño húmedo mensualmente para optimizar la fotosíntesis.'
   ];
 
   function generateBotResponse(userText) {
@@ -1177,7 +1189,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const matchedPlant = plants.find(p => txt.includes(p.nombre_personalizado.toLowerCase()));
     // Si pregunta por riego (cada cuanto / cuando) y menciona planta
     if (matchedPlant && (txt.includes('cada') || txt.includes('cada cuanto') || txt.includes('cuando') || txt.includes('riego') || txt.includes('regar'))) {
-      const catalog = getCatalogItem(matchedPlant.id_catalogo);
+      const catalog = getCatalogItem(matchedPlant);
       const freq = catalog.frecuencia_riego_dias || 7;
       const days = getDaysUntilWatering(matchedPlant);
       if (days <= 0) return `${matchedPlant.nombre_personalizado} necesita riego hoy. Frecuencia típica: cada ${freq} días.`;
@@ -1186,7 +1198,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Si pregunta por abono
     if (matchedPlant && (txt.includes('abono') || txt.includes('abonar') || txt.includes('fertil'))) {
-      const catalog = getCatalogItem(matchedPlant.id_catalogo);
+      const catalog = getCatalogItem(matchedPlant);
       const abFreq = catalog.abono_frecuencia_dias || 30;
       const daysAb = getDaysUntilAbono(matchedPlant);
       if (daysAb <= 0) return `${matchedPlant.nombre_personalizado} necesita abono hoy. Frecuencia típica: cada ${abFreq} días.`;
@@ -1195,13 +1207,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Si pregunta por luz o temperatura
     if (matchedPlant && (txt.includes('luz') || txt.includes('temperatura') || txt.includes('clima'))) {
-      const catalog = getCatalogItem(matchedPlant.id_catalogo);
+      const catalog = getCatalogItem(matchedPlant);
       return `${matchedPlant.nombre_personalizado}: luz recomendada '${catalog.luz_recomendada}', temperatura ideal ${catalog.temperatura_min}°C - ${catalog.temperatura_max}°C.`;
     }
 
     // Si la pregunta menciona una planta pero sin palabra clave, dar resumen breve
     if (matchedPlant) {
-      const catalog = getCatalogItem(matchedPlant.id_catalogo);
+      const catalog = getCatalogItem(matchedPlant);
       return `${matchedPlant.nombre_personalizado} — ${catalog.nombre_comun}. Riego cada ${catalog.frecuencia_riego_dias} días, abono cada ${catalog.abono_frecuencia_dias || 30} días.`;
     }
 
@@ -1279,8 +1291,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- CARGA DE DATOS DEL SERVIDOR / LOCAL STORAGE ---
   async function loadDashboardData() {
     try {
-      if (mockMode) throw new Error('Modo simulador activo');
-
       const response = await fetch('/api/plantas', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -1288,7 +1298,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!response.ok) throw new Error('Error al obtener plantas');
       const data = await response.json();
       plants = data;
-      
+
       const resHist = await fetch('/api/historial', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -1296,18 +1306,10 @@ document.addEventListener('DOMContentLoaded', () => {
         historyLogs = await resHist.json();
       }
     } catch (err) {
-      mockMode = true;
-      console.info('Cargando respaldo local desde localStorage (servidor apagado).', err);
-      
-      if (!localStorage.getItem('petalia_local_plants')) {
-        localStorage.setItem('petalia_local_plants', JSON.stringify(DEFAULT_PLANTS));
-      }
-      if (!localStorage.getItem('petalia_local_history')) {
-        localStorage.setItem('petalia_local_history', JSON.stringify(DEFAULT_HISTORY));
-      }
-      
-      plants = JSON.parse(localStorage.getItem('petalia_local_plants'));
-      historyLogs = JSON.parse(localStorage.getItem('petalia_local_history'));
+      console.error('Error al cargar datos del jardín:', err.message);
+      showToast('Error', 'No se pudieron cargar los datos del servidor.', 'warning');
+      plants = [];
+      historyLogs = [];
     }
 
     refreshAllViews();
@@ -1340,16 +1342,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const events = [];
     const today = new Date();
-    today.setHours(0,0,0,0);
+    today.setHours(0, 0, 0, 0);
 
     plants.forEach(plant => {
-      const catalog = getCatalogItem(plant.id_catalogo);
-      
+      const catalog = getCatalogItem(plant);
+
       // Evento de Riego
       const lastWater = new Date(plant.fecha_ultimo_riego);
       const nextWater = new Date(lastWater.getTime());
       nextWater.setDate(nextWater.getDate() + catalog.frecuencia_riego_dias);
-      nextWater.setHours(0,0,0,0);
+      nextWater.setHours(0, 0, 0, 0);
       const diffWater = nextWater - today;
       const daysWater = Math.ceil(diffWater / (1000 * 60 * 60 * 24));
 
@@ -1366,7 +1368,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const lastAbono = new Date(plant.fecha_ultimo_abono || plant.fecha_adquisicion);
       const nextAbono = new Date(lastAbono.getTime());
       nextAbono.setDate(nextAbono.getDate() + (catalog.abono_frecuencia_dias || 30));
-      nextAbono.setHours(0,0,0,0);
+      nextAbono.setHours(0, 0, 0, 0);
       const diffAbono = nextAbono - today;
       const daysAbono = Math.ceil(diffAbono / (1000 * 60 * 60 * 24));
 
@@ -1384,10 +1386,10 @@ document.addEventListener('DOMContentLoaded', () => {
     scheduledEvents.forEach(se => {
       const plant = plants.find(p => p.id_planta_usuario === se.plantId) || { nombre_personalizado: 'Desconocida' };
       const evDate = new Date(se.dateISO);
-      evDate.setHours(0,0,0,0);
+      evDate.setHours(0, 0, 0, 0);
       const diff = evDate - today;
-      const daysLeft = Math.ceil(diff / (1000*60*60*24));
-      events.push({ plant, type: se.type === 'water' ? 'water' : 'fertilize', date: evDate, daysLeft, label: `${se.type === 'water' ? 'Riego' : 'Abono'} de ${plant.nombre_personalizado}${se.notes ? ' - '+se.notes : ''}`, icon: se.type === 'water' ? 'water_drop' : 'spa', isScheduled: true });
+      const daysLeft = Math.ceil(diff / (1000 * 60 * 60 * 24));
+      events.push({ plant, type: se.type === 'water' ? 'water' : 'fertilize', date: evDate, daysLeft, label: `${se.type === 'water' ? 'Riego' : 'Abono'} de ${plant.nombre_personalizado}${se.notes ? ' - ' + se.notes : ''}`, icon: se.type === 'water' ? 'water_drop' : 'spa', isScheduled: true });
     });
 
     // Ordenar cronológicamente por días restantes
@@ -1418,13 +1420,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const item = document.createElement('div');
       item.className = 'calendar-event-item';
+      const dateText = (ev.daysLeft > 7 || ev.daysLeft < -1) ? relativeDay : `${relativeDay} (${formatDate(ev.date.toISOString())})`;
       item.innerHTML = `
         <div class="calendar-event-icon ${ev.type}">
           <span class="material-symbols-rounded">${ev.icon}</span>
         </div>
         <div class="calendar-event-details">
           <span class="calendar-event-title">${ev.label}</span>
-          <span class="calendar-event-date">${relativeDay} (${formatDate(ev.date.toISOString())})</span>
+          <span class="calendar-event-date">${dateText}</span>
         </div>
       `;
       container.appendChild(item);
@@ -1434,7 +1437,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- PANEL DE NOTIFICACIONES DROPDOWN ---
   function initNotificationDropdown() {
     if (!notificationBellBtn || !notificationDropdown) return;
-    
+
     notificationBellBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       notificationDropdown.classList.toggle('hidden');
@@ -1540,7 +1543,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderDashboard();
     renderCalendarTimeline();
     renderNotificationDropdown();
-    
+
     const activeTab = document.querySelector('.nav-item.active');
     if (activeTab) {
       const section = activeTab.dataset.section;
@@ -1567,7 +1570,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Seleccionar una planta para el consejo de rotación
     const plantForRotation = sourcePlants[Math.floor(Math.random() * sourcePlants.length)];
-    const catalogRot = getCatalogItem(plantForRotation.id_catalogo);
+    const catalogRot = getCatalogItem(plantForRotation);
     const nicknameRot = plantForRotation.nombre_personalizado;
 
     let rotationAdvice = `Dale un giro de 90 grados a tu ${nicknameRot} cada semana para un crecimiento uniforme.`;
@@ -1590,7 +1593,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (sourcePlants.length > 1 && plantForFact.id_planta_usuario === plantForRotation.id_planta_usuario) {
       plantForFact = sourcePlants.find(p => p.id_planta_usuario !== plantForRotation.id_planta_usuario) || plantForFact;
     }
-    const catalogFact = getCatalogItem(plantForFact.id_catalogo);
+    const catalogFact = getCatalogItem(plantForFact);
     const nicknameFact = plantForFact.nombre_personalizado;
 
     let scientificFact = `Un dato: Las plantas de interior como ${nicknameFact} mejoran la calidad del aire y reducen el estrés.`;
@@ -1628,7 +1631,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderDashboard() {
     let filteredPlants = plants.filter(p => {
       return p.nombre_personalizado.toLowerCase().includes(searchQuery.toLowerCase()) ||
-             getCatalogName(p.id_catalogo).toLowerCase().includes(searchQuery.toLowerCase());
+        getCatalogName(p.id_catalogo).toLowerCase().includes(searchQuery.toLowerCase());
     });
 
     plantsGrid.innerHTML = '';
@@ -1711,10 +1714,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // También incluir eventos programados que ocurren hoy o mañana
-    const today = new Date(); today.setHours(0,0,0,0);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
     scheduledEvents.forEach(se => {
-      const evDate = new Date(se.dateISO); evDate.setHours(0,0,0,0);
-      const daysLeft = Math.ceil((evDate - today)/(1000*60*60*24));
+      const evDate = new Date(se.dateISO); evDate.setHours(0, 0, 0, 0);
+      const daysLeft = Math.ceil((evDate - today) / (1000 * 60 * 60 * 24));
       if (daysLeft <= 1) {
         alertsCount++;
         const alertItem = document.createElement('div');
@@ -1737,7 +1740,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const historyTimeline = document.getElementById('history-timeline');
     if (!historyTimeline) return;
     historyTimeline.innerHTML = '';
-    
+
     const sorted = [...historyLogs].sort((a, b) => new Date(b.fecha_realizada) - new Date(a.fecha_realizada));
 
     if (sorted.length === 0) {
@@ -1748,7 +1751,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sorted.forEach(log => {
       const item = document.createElement('div');
       item.className = 'timeline-item';
-      
+
       const icon = log.tipo_cuidado === 'Fertilizacion' ? 'spa' : 'water_drop';
       const color = log.tipo_cuidado === 'Riego' ? 'var(--primary)' : 'var(--warning-yellow)';
 
@@ -1777,8 +1780,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const target = sortedByUrgency[0];
     const days = getDaysUntilWatering(target);
-    const catalog = getCatalogItem(target.id_catalogo);
-    
+    const catalog = getCatalogItem(target);
+
     let targetText = `${target.nombre_personalizado}: `;
     if (days <= 0) {
       targetText += '¡Hoy mismo!';
@@ -1809,14 +1812,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const isFav = plant.favorita === 1;
 
     try {
-      if (mockMode) throw new Error('Simulación');
-
       if (isFav) {
         const response = await fetch(`/api/favoritos/${id}`, {
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (!response.ok) throw new Error('Error');
+        if (!response.ok) throw new Error('Error al remover de favoritos');
       } else {
         const response = await fetch('/api/favoritos', {
           method: 'POST',
@@ -1826,17 +1827,16 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           body: JSON.stringify({ id_planta_usuario: id })
         });
-        if (!response.ok) throw new Error('Error');
+        if (!response.ok) throw new Error('Error al agregar a favoritos');
       }
+
+      plant.favorita = isFav ? 0 : 1;
+      refreshAllViews();
+      showToast('Favorito', isFav ? 'Removido de favoritos' : 'Agregado a favoritos', 'success');
     } catch (err) {
-      mockMode = true;
+      console.error('Error al cambiar favorito:', err.message);
+      showToast('Error', 'No se pudo procesar la solicitud en el servidor.', 'warning');
     }
-
-    plant.favorita = isFav ? 0 : 1;
-    localStorage.setItem('petalia_local_plants', JSON.stringify(plants));
-
-    refreshAllViews();
-    showToast('Favorito', isFav ? 'Removido de favoritos' : 'Agregado a favoritos', 'success');
   }
 
   // Event Delegation global para botones interactivos de tarjetas
@@ -1912,8 +1912,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!plant) return;
 
     try {
-      if (mockMode) throw new Error('Simulación');
-
       const response = await fetch(`/api/plantas/${id}/regar`, {
         method: 'POST',
         headers: {
@@ -1922,39 +1920,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
 
-      if (!response.ok) throw new Error('No se pudo regar');
+      if (!response.ok) throw new Error('No se pudo registrar el riego');
       const data = await response.json();
       plant.fecha_ultimo_riego = data.fecha_ultimo_riego || todayStr;
-      
+
+      // Reload history
+      const resHist = await fetch('/api/historial', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (resHist.ok) {
+        historyLogs = await resHist.json();
+      }
+
+      showToast('Planta Regada', `${plant.nombre_personalizado} ha sido regada correctamente.`, 'success');
+
+      // Reactividad inmediata: alternar clases CSS en la tarjeta sin recargar página
+      document.querySelectorAll(`.plant-card-ref[data-id="${id}"]`).forEach(card => {
+        card.classList.remove('card-critico');
+        card.classList.add('card-saludable');
+        // Quitar card-saludable después de 3 segundos y dejar estado normal
+        setTimeout(() => card.classList.remove('card-saludable'), 3000);
+      });
+
+      refreshAllViews();
     } catch (err) {
-      mockMode = true;
-      plant.fecha_ultimo_riego = todayStr;
-      
-      const log = {
-        id_historial: Date.now(),
-        id_planta_usuario: id,
-        nombre_personalizado: plant.nombre_personalizado,
-        tipo_cuidado: 'Riego',
-        fecha_realizada: new Date().toISOString(),
-        observaciones: 'Riego manual registrado'
-      };
-      historyLogs.unshift(log);
-
-      localStorage.setItem('petalia_local_plants', JSON.stringify(plants));
-      localStorage.setItem('petalia_local_history', JSON.stringify(historyLogs));
+      console.error('Error al regar planta:', err.message);
+      showToast('Error', 'No se pudo registrar el riego en el servidor.', 'warning');
     }
-
-    showToast('Planta Regada', `${plant.nombre_personalizado} ha sido regada correctamente.`, 'success');
-    
-    // Reactividad inmediata: alternar clases CSS en la tarjeta sin recargar página
-    document.querySelectorAll(`.plant-card-ref[data-id="${id}"]`).forEach(card => {
-      card.classList.remove('card-critico');
-      card.classList.add('card-saludable');
-      // Quitar card-saludable después de 3 segundos y dejar estado normal
-      setTimeout(() => card.classList.remove('card-saludable'), 3000);
-    });
-    
-    refreshAllViews();
   }
 
   async function performFertilizing(id) {
@@ -1963,8 +1955,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!plant) return;
 
     try {
-      if (mockMode) throw new Error('Simulación');
-
       const response = await fetch(`/api/plantas/${id}/abonar`, {
         method: 'POST',
         headers: {
@@ -1973,49 +1963,41 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
 
-      if (!response.ok) throw new Error('No se pudo abonar');
+      if (!response.ok) throw new Error('No se pudo registrar el abono');
       const data = await response.json();
       plant.fecha_ultimo_abono = data.fecha_ultimo_abono || todayStr;
-      
+
+      // Reload history
+      const resHist = await fetch('/api/historial', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (resHist.ok) {
+        historyLogs = await resHist.json();
+      }
+
+      showToast('Planta Abonada', `${plant.nombre_personalizado} ha sido fertilizada correctamente.`, 'success');
+      refreshAllViews();
     } catch (err) {
-      mockMode = true;
-      plant.fecha_ultimo_abono = todayStr;
-      
-      const log = {
-        id_historial: Date.now(),
-        id_planta_usuario: id,
-        nombre_personalizado: plant.nombre_personalizado,
-        tipo_cuidado: 'Fertilizacion',
-        fecha_realizada: new Date().toISOString(),
-        observaciones: 'Abono manual registrado'
-      };
-      historyLogs.unshift(log);
-
-      localStorage.setItem('petalia_local_plants', JSON.stringify(plants));
-      localStorage.setItem('petalia_local_history', JSON.stringify(historyLogs));
+      console.error('Error al abonar planta:', err.message);
+      showToast('Error', 'No se pudo registrar el abono en el servidor.', 'warning');
     }
-
-    showToast('Planta Abonada', `${plant.nombre_personalizado} ha sido fertilizada correctamente.`, 'success');
-    refreshAllViews();
   }
 
   async function performDeletion(id) {
     try {
-      if (mockMode) throw new Error('Simulación');
-
       const response = await fetch(`/api/plantas/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (!response.ok) throw new Error('No se pudo eliminar');
-    } catch (err) {
-      mockMode = true;
+      if (!response.ok) throw new Error('No se pudo eliminar la planta');
+      
       plants = plants.filter(p => p.id_planta_usuario !== id);
-      localStorage.setItem('petalia_local_plants', JSON.stringify(plants));
+      showToast('Eliminada', 'La planta ha sido removida de la colección.', 'info');
+      refreshAllViews();
+    } catch (err) {
+      console.error('Error al eliminar planta:', err.message);
+      showToast('Error', 'No se pudo eliminar la planta en el servidor.', 'warning');
     }
-
-    showToast('Eliminada', 'La planta ha sido removida de la colección.', 'info');
-    refreshAllViews();
   }
 
   // (El handler del botón de consejo rápido ya está definido arriba en línea 651-660)
@@ -2042,6 +2024,10 @@ document.addEventListener('DOMContentLoaded', () => {
     resetPhotoPreview();
     selectedCatalogItem = null;
     selectedCatalogId.value = '';
+    const previewDiv = document.getElementById('catalog-plant-preview');
+    if (previewDiv) {
+      previewDiv.classList.add('hidden');
+    }
   }
 
   closeModalBtn.addEventListener('click', closeModal);
@@ -2061,7 +2047,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       try {
-        if (mockMode) throw new Error('Simulación');
         const response = await fetch(`/api/catalogo?search=${encodeURIComponent(val)}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -2069,7 +2054,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await response.json();
         renderSuggestions(data);
       } catch (err) {
-        const items = MOCK_CATALOG.filter(item => 
+        const items = MOCK_CATALOG.filter(item =>
           item.nombre_comun.toLowerCase().includes(val.toLowerCase()) ||
           item.nombre_cientifico.toLowerCase().includes(val.toLowerCase())
         );
@@ -2101,6 +2086,19 @@ document.addEventListener('DOMContentLoaded', () => {
         catalogSearch.value = `${item.nombre_comun} (${item.nombre_cientifico})`;
         selectedCatalogId.value = item.id_catalogo;
         catalogSuggestions.classList.add('hidden');
+        
+        // Populate and display selected catalog plant preview
+        const previewDiv = document.getElementById('catalog-plant-preview');
+        const previewImg = document.getElementById('preview-catalog-img');
+        const previewName = document.getElementById('preview-catalog-name');
+        const previewDesc = document.getElementById('preview-catalog-desc');
+        
+        if (previewDiv && previewImg && previewName && previewDesc) {
+          previewImg.src = item.imagen_url || 'https://images.unsplash.com/photo-1596547609652-9cf5d8d76921?auto=format&fit=crop&q=80&w=600';
+          previewName.textContent = `${item.nombre_comun} (${item.nombre_cientifico})`;
+          previewDesc.textContent = item.descripcion || 'Sin descripción disponible.';
+          previewDiv.classList.remove('hidden');
+        }
       });
       catalogSuggestions.appendChild(div);
     });
@@ -2156,14 +2154,14 @@ document.addEventListener('DOMContentLoaded', () => {
       canvas.height = cameraVideo.videoHeight || 480;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(cameraVideo, 0, 0, canvas.width, canvas.height);
-      
+
       canvas.toBlob((blob) => {
         if (blob) {
           if (tempPhotoUrl) {
             URL.revokeObjectURL(tempPhotoUrl);
           }
           const capturedFile = new File([blob], 'captured_plant.png', { type: 'image/png' });
-          
+
           // Asignar el archivo capturado al input file
           const dataTransfer = new DataTransfer();
           dataTransfer.items.add(capturedFile);
@@ -2171,7 +2169,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
           tempPhotoUrl = URL.createObjectURL(blob);
           photoPreview.src = tempPhotoUrl;
-          
+
           stopCamera();
           cameraStreamWrapper.classList.add('hidden');
           photoPreviewWrapper.classList.remove('hidden');
@@ -2203,7 +2201,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       tempPhotoUrl = URL.createObjectURL(file);
       photoPreview.src = tempPhotoUrl;
-      
+
       stopCamera();
       if (cameraStreamWrapper) cameraStreamWrapper.classList.add('hidden');
       photoPreviewWrapper.classList.remove('hidden');
@@ -2254,8 +2252,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      if (mockMode) throw new Error('Simulación');
-      
       const formData = new FormData();
       formData.append('id_catalogo', catId);
       formData.append('nombre_personalizado', nickname);
@@ -2271,36 +2267,25 @@ document.addEventListener('DOMContentLoaded', () => {
         body: formData
       });
 
-      if (!response.ok) throw new Error('Error al registrar');
+      if (!response.ok) throw new Error('Error al registrar planta en el servidor');
+      
       closeModal();
-      loadDashboardData();
+      await loadDashboardData();
+      showToast('Guardado', `Planta '${nickname}' añadida exitosamente.`, 'success');
     } catch (err) {
-      mockMode = true;
-      
-      const newPlant = {
-        id_planta_usuario: Date.now(),
-        id_catalogo: parseInt(catId),
-        nombre_personalizado: nickname,
-        fecha_adquisicion: acqDate,
-        fecha_ultimo_riego: lastWateredDate,
-        fecha_ultimo_abono: acqDate,
-        favorita: 0,
-        estado: 'Activa',
-        imagen_url: tempPhotoUrl || (selectedCatalogItem ? selectedCatalogItem.imagen_url : ''),
-        frecuencia_riego_dias: parseInt(plantFrequency && plantFrequency.value) || (selectedCatalogItem ? selectedCatalogItem.frecuencia_riego_dias : 7)
-      };
-
-      plants.push(newPlant);
-      localStorage.setItem('petalia_local_plants', JSON.stringify(plants));
-      
-      showToast('Guardado Local', `Planta '${nickname}' añadida.`, 'success');
-      closeModal();
-      refreshAllViews();
+      console.error('Error al registrar planta:', err.message);
+      showToast('Error', 'No se pudo guardar la planta en el servidor.', 'warning');
     }
   });
 
   // --- MÉTODOS DE CÁLCULO ---
-  function getCatalogItem(id) {
+  function getCatalogItem(idOrPlant) {
+    if (idOrPlant && typeof idOrPlant === 'object') {
+      return idOrPlant;
+    }
+    const id = parseInt(idOrPlant, 10);
+    const plant = plants.find(p => p.id_catalogo === id);
+    if (plant) return plant;
     return MOCK_CATALOG.find(item => item.id_catalogo === id) || MOCK_CATALOG[0];
   }
 
@@ -2314,30 +2299,30 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function getDaysUntilWatering(plant) {
-    const catalog = getCatalogItem(plant.id_catalogo);
+    const catalog = getCatalogItem(plant);
     const lastWatered = new Date(plant.fecha_ultimo_riego);
     const freq = plant.frecuencia_riego_dias || catalog.frecuencia_riego_dias;
     const nextWatered = new Date(lastWatered.getTime());
     nextWatered.setDate(nextWatered.getDate() + freq);
-    
+
     const today = new Date();
-    today.setHours(0,0,0,0);
-    nextWatered.setHours(0,0,0,0);
-    
+    today.setHours(0, 0, 0, 0);
+    nextWatered.setHours(0, 0, 0, 0);
+
     const diff = nextWatered - today;
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
   }
 
   function getDaysUntilAbono(plant) {
-    const catalog = getCatalogItem(plant.id_catalogo);
+    const catalog = getCatalogItem(plant);
     const lastAbono = new Date(plant.fecha_ultimo_abono || plant.fecha_adquisicion);
     const nextAbono = new Date(lastAbono.getTime());
     nextAbono.setDate(nextAbono.getDate() + (catalog.abono_frecuencia_dias || 30));
-    
+
     const today = new Date();
-    today.setHours(0,0,0,0);
-    nextAbono.setHours(0,0,0,0);
-    
+    today.setHours(0, 0, 0, 0);
+    nextAbono.setHours(0, 0, 0, 0);
+
     const diff = nextAbono - today;
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
   }

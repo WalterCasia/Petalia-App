@@ -78,9 +78,21 @@ async function updateLastWateringDate(idPlantaUsuario) {
   );
 }
 
+async function updateLastFertilizingDate(idPlantaUsuario) {
+  await db.execute(
+    `
+    UPDATE plantas_usuario
+    SET fecha_ultimo_abono = CURDATE()
+    WHERE id_planta_usuario = ?
+    `,
+    [idPlantaUsuario]
+  );
+}
+
 module.exports = {
   createCareHistory,
   getCareHistoryByUser,
   verifyPlantBelongsToUser,
-  updateLastWateringDate
+  updateLastWateringDate,
+  updateLastFertilizingDate
 };

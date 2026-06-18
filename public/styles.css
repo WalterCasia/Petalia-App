@@ -2979,3 +2979,156 @@ body {
   font-size: 13px;
   color: var(--text-muted);
 }
+
+/* ============================================================
+   RESPONSIVE DESIGN & MOBILE OPTIMIZATIONS
+   ============================================================ */
+
+/* Hide mobile menu button by default on desktop */
+.mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  color: var(--primary);
+  border-radius: 50%;
+  transition: background 0.2s ease;
+}
+.mobile-menu-btn:hover {
+  background: var(--bg-main);
+}
+.mobile-menu-btn span {
+  font-size: 24px;
+}
+
+@media (max-width: 768px) {
+  /* Layout */
+  .app-layout {
+    flex-direction: column;
+    position: relative;
+  }
+
+  /* Sidebar as slide-out drawer */
+  .app-sidebar {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px !important;
+    height: 100vh !important;
+    z-index: 3000 !important;
+    transform: translateX(0);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow-lg);
+    border-right: 1px solid var(--border);
+  }
+
+  /* When collapsed (default on mobile), slide it out of screen */
+  .app-sidebar.collapsed {
+    transform: translateX(-100%) !important;
+    width: 280px !important; /* Keep width consistent so transition works */
+  }
+
+  .app-sidebar .logo-text,
+  .app-sidebar .nav-item span:last-child {
+    display: inline-block !important; /* Force display when menu is slid in */
+  }
+
+  .app-sidebar .nav-item {
+    padding: 12px 16px !important;
+    justify-content: flex-start !important;
+  }
+
+  /* Content area adjustments */
+  .app-content-container {
+    padding: 16px 20px !important;
+    margin-top: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+  }
+
+  /* Display mobile hamburger button in header */
+  .mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 8px;
+  }
+
+  /* Header adjustments */
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    width: 100%;
+  }
+
+  .header-right {
+    width: 100%;
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  .header-search {
+    width: 100% !important;
+  }
+
+  .header-search input {
+    width: 100% !important;
+  }
+
+  .user-profile-dropdown {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  /* Grids and Columns stacking */
+  .inicio-grid-3col {
+    grid-template-columns: 1fr !important;
+    gap: 20px;
+  }
+
+  .plants-grid-layout, 
+  .cuidados-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+  }
+
+  /* Riego individual rows */
+  .riego-plant-row {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
+  .riego-row-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  /* Scroll list compact width */
+  .plants-scroll-container .plant-card-ref {
+    width: 260px; /* Slightly larger cards for better view on mobile scroll */
+  }
+
+  /* Calendar Monthly view slider on mobile */
+  .calendar-monthly-layout {
+    grid-template-columns: 1fr !important;
+  }
+
+  .calendar-grid-days {
+    display: flex !important;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 12px;
+    scroll-snap-type: x mandatory;
+  }
+
+  .calendar-day-cell {
+    min-width: 90px;
+    scroll-snap-align: start;
+  }
+}

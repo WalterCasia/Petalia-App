@@ -5,10 +5,10 @@ const User = require('../models/User');
 
 const register = async (req, res, next) => {
   try {
-    const { username, email, password } = req.body;
+    const { nombre, email, password } = req.body;
 
-    if (!username || !email || !password) {
-      const error = new Error('Username, email and password are required');
+    if (!nombre || !email || !password) {
+      const error = new Error('Nombre, email and password are required');
       error.status = 400;
       return next(error);
     }
@@ -27,14 +27,14 @@ const register = async (req, res, next) => {
 
     // Create the user
     const newUser = await User.create({
-      username,
+      nombre,
       email,
       password: hashedPassword
     });
 
     // Generate JWT
     const token = jwt.sign(
-      { id: newUser.id, email: newUser.email },
+      { id: newUser.id_usuario || newUser.id, email: newUser.email },
       process.env.JWT_SECRET || 'supersecretjwtkeyforpetalia',
       { expiresIn: '24h' }
     );
@@ -43,8 +43,8 @@ const register = async (req, res, next) => {
       message: 'User registered successfully',
       token,
       user: {
-        id: newUser.id,
-        username: newUser.username,
+        id: newUser.id_usuario,
+        nombre: newUser.nombre,
         email: newUser.email
       }
     });
@@ -81,7 +81,7 @@ const login = async (req, res, next) => {
 
     // Generate JWT
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      { id: user.id_usuario || user.id, email: user.email },
       process.env.JWT_SECRET || 'supersecretjwtkeyforpetalia',
       { expiresIn: '24h' }
     );
@@ -89,9 +89,10 @@ const login = async (req, res, next) => {
     res.json({
       message: 'Logged in successfully',
       token,
+      nombre: user.nombre, // for frontend compatibility: data.nombre
       user: {
-        id: user.id,
-        username: user.username,
+        id: user.id_usuario,
+        nombre: user.nombre,
         email: user.email
       }
     });

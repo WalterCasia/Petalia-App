@@ -92,6 +92,33 @@ class Favorite {
         const [rows] = await db.execute(sql, [id_usuario, id_catalogo]);
         return rows.length > 0;
     }
+
+    /**
+     * Agrega una planta de catálogo directamente a favoritos (deseos).
+     */
+    static async addFavoriteCatalog(id_usuario, id_catalogo) {
+        const sql = 'INSERT IGNORE INTO favoritos (id_usuario, id_catalogo) VALUES (?, ?)';
+        const [result] = await db.execute(sql, [id_usuario, id_catalogo]);
+        return { id: result.insertId, id_usuario, id_catalogo };
+    }
+
+    /**
+     * Elimina una planta de catálogo directamente de favoritos (deseos).
+     */
+    static async removeFavoriteCatalog(id_usuario, id_catalogo) {
+        const sql = 'DELETE FROM favoritos WHERE id_usuario = ? AND id_catalogo = ?';
+        const [result] = await db.execute(sql, [id_usuario, id_catalogo]);
+        return result.affectedRows > 0;
+    }
+
+    /**
+     * Verifica si una planta de catálogo está en favoritos de deseos.
+     */
+    static async existsCatalog(id_usuario, id_catalogo) {
+        const sql = 'SELECT 1 FROM favoritos WHERE id_usuario = ? AND id_catalogo = ? LIMIT 1';
+        const [rows] = await db.execute(sql, [id_usuario, id_catalogo]);
+        return rows.length > 0;
+    }
 }
 
 module.exports = Favorite;

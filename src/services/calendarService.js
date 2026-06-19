@@ -72,7 +72,8 @@ async function getPlantsWithWateringStatus(idUsuario) {
       cp.nombre_comun,
       cp.nombre_cientifico,
       cp.frecuencia_riego_dias,
-      cp.imagen_url
+      pu.imagen_url AS imagen_url,
+      cp.imagen_url AS catalog_imagen_url
     FROM plantas_usuario pu
     INNER JOIN catalogo_plantas cp
       ON pu.id_catalogo = cp.id_catalogo

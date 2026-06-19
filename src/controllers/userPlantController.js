@@ -1,6 +1,7 @@
 // Ruta: src/controllers/userPlantController.js
 const UserPlant = require('../models/UserPlant');
 const Plant = require('../models/Plant');
+const ExternalApiService = require('../services/ExternalApiService');
 
 /**
  * Agrega una planta a la colección personal del usuario autenticado.
@@ -20,12 +21,19 @@ exports.addUserPlant = async (req, res, next) => {
             return res.status(404).json({ message: 'La planta no existe en el catálogo general' });
         }
 
-        // Handle uploaded photo or assign default catalog image
+        // Handle uploaded photo or assign default catalog image from Perenual API details
         let imagen_url = null;
         if (req.file) {
             imagen_url = `/uploads/${req.file.filename}`;
         } else {
-            imagen_url = plantExists.imagen_url;
+            try {
+                // Fetch the original plant details from Perenual API to get the correct original image URL
+                const extDetails = await ExternalApiService.getPlantDetails(id_catalogo);
+                imagen_url = extDetails.imagen_url || plantExists.imagen_url;
+            } catch (err) {
+                console.error('Failed to get original image from API details:', err.message);
+                imagen_url = plantExists.imagen_url;
+            }
         }
 
         const newUserPlant = await UserPlant.create({

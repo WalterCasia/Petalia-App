@@ -116,6 +116,10 @@
             <span class="material-symbols-rounded">home</span>
             <span>Inicio</span>
           </a>
+          <a href="#" class="nav-item" data-section="catalogo-general">
+            <span class="material-symbols-rounded">local_florist</span>
+            <span>Catálogo</span>
+          </a>
           <a href="#" class="nav-item" data-section="mis-plantas">
             <span class="material-symbols-rounded">forest</span>
             <span>Mis Plantas</span>
@@ -206,6 +210,22 @@
 
         <!-- Grid Principal del Dashboard -->
         <main class="dashboard-main-grid">
+
+          <!-- SECCIÓN: CATÁLOGO GENERAL -->
+          <div id="section-catalogo-general" class="dashboard-section-view hidden">
+            <section class="widget-card full-width-widget">
+              <div class="widget-header">
+                <h2>Catálogo de Plantas</h2>
+                <div class="header-search-catalog">
+                  <span class="material-symbols-rounded">search</span>
+                  <input type="text" id="search-catalogo-input" placeholder="Buscar plantas en el catálogo...">
+                </div>
+              </div>
+              <div class="plants-grid-layout" id="plants-grid-catalogo">
+                <!-- Tarjetas del catálogo cargadas dinámicamente -->
+              </div>
+            </section>
+          </div>
 
           <!-- SECCIÓN: INICIO -->
           <div id="section-inicio" class="dashboard-section-view">
@@ -381,6 +401,16 @@
               </div>
               <div class="plants-grid-layout" id="plants-grid-favoritos">
                 <!-- Renderizado de plantas favoritas -->
+              </div>
+            </section>
+
+            <!-- Subsección Mis Deseos -->
+            <section class="widget-card full-width-widget" style="margin-top: 32px;">
+              <div class="widget-header">
+                <h2>Mis Deseos <span class="plants-count-badge" id="stat-total-count-deseos">(0)</span></h2>
+              </div>
+              <div class="plants-grid-layout" id="plants-grid-deseos">
+                <!-- Renderizado de deseos de catálogo -->
               </div>
             </section>
           </div>
@@ -659,33 +689,94 @@
     </div>
   </div>
 
-  <!-- Modal: Detalle de Planta -->
-  <div id="plant-detail-modal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2 id="detail-name">Detalle de Planta</h2>
-        <button id="detail-close" class="btn-close-modal"><span class="material-symbols-rounded">close</span></button>
+  <!-- Modal: Detalle de Planta (Rediseñado) -->
+  <div id="plant-detail-modal" class="modal modal-blur">
+    <div class="modal-content detail-modal-content">
+      <!-- Encabezado -->
+      <div class="detail-modal-header">
+        <h2 id="detail-name" class="detail-nickname">Apodo de Planta</h2>
+        <button id="detail-close" class="btn-close-modal-round" title="Cerrar">
+          <span class="material-symbols-rounded">close</span>
+        </button>
       </div>
-      <div class="modal-body" id="detail-body">
-        <div class="detail-image"><img id="detail-image" src="#" alt="Imagen planta"
-            style="width:100%;border-radius:8px;object-fit:cover;max-height:220px;" /></div>
-        <div class="detail-info" style="margin-top:12px;">
-          <p id="detail-species"></p>
-          <p id="detail-acquired"></p>
-          <p id="detail-last-watered"></p>
-          <p id="detail-frequency"></p>
-          <p id="detail-next-watering"></p>
-          <hr style="margin: 12px 0; border: 0; border-top: 1px solid var(--border);" />
-          <p id="detail-description" style="font-size: 13px; line-height: 1.5; color: var(--text-main);"></p>
-          <p id="detail-care-guides" style="font-size: 13px; line-height: 1.5; color: var(--text-main); margin-top: 8px;"></p>
-          <div id="detail-annex-container" class="hidden" style="margin-top: 12px;">
-            <span style="font-size: 12px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px;">Foto Personalizada (Anexo):</span>
-            <img id="detail-annex-image" src="#" style="width: 100px; height: 100px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border);" />
+      
+      <!-- Cuerpo -->
+      <div class="detail-modal-body">
+        <!-- Imagen Circular -->
+        <div class="detail-image-container">
+          <img id="detail-image" src="#" alt="Imagen de Planta" class="detail-img-circle" />
+        </div>
+        
+        <!-- Título y Descripción -->
+        <div class="detail-titles-desc">
+          <h3 id="detail-title-scientific" class="detail-serif-title">Nombre Común (Nombre Científico)</h3>
+          <p id="detail-description" class="detail-desc-text">Descripción e información esencial de cuidados...</p>
+        </div>
+        
+        <!-- Cuadrícula de Atributos (Chips Verdes) -->
+        <div class="detail-attributes-grid">
+          <!-- Columna Izquierda -->
+          <div class="detail-column">
+            <div class="detail-chip">
+              <span class="material-symbols-rounded chip-icon">loop</span>
+              <span class="chip-label">Ciclo:</span>
+              <span id="detail-cycle" class="chip-value">Perennial</span>
+            </div>
+            <div class="detail-chip">
+              <span class="material-symbols-rounded chip-icon">water_drop</span>
+              <span class="chip-label">Riego:</span>
+              <span id="detail-watering" class="chip-value">Average</span>
+            </div>
+            <div class="detail-chip">
+              <span class="material-symbols-rounded chip-icon">wb_sunny</span>
+              <span class="chip-label">Sol:</span>
+              <span id="detail-sun" class="chip-value">Luz indirecta</span>
+            </div>
+            <div class="detail-chip">
+              <span class="material-symbols-rounded chip-icon">grid_view</span>
+              <span class="chip-label">Hardiness:</span>
+              <span id="detail-hardiness" class="chip-value">10 - 11</span>
+            </div>
+            <div class="detail-chip">
+              <span class="material-symbols-rounded chip-icon">water_damage</span>
+              <span class="chip-label">Seq. Tolerante:</span>
+              <span id="detail-drought" class="chip-value">No</span>
+            </div>
+          </div>
+          <!-- Columna Derecha -->
+          <div class="detail-column">
+            <div class="detail-chip">
+              <span class="material-symbols-rounded chip-icon">local_florist</span>
+              <span class="chip-label">Flores:</span>
+              <span id="detail-flowers" class="chip-value">Sí</span>
+            </div>
+            <div class="detail-chip">
+              <span class="material-symbols-rounded chip-icon">spa</span>
+              <span class="chip-label">Follaje:</span>
+              <span id="detail-foliage" class="chip-value">Verde</span>
+            </div>
+            <div class="detail-chip">
+              <span class="material-symbols-rounded chip-icon">trending_up</span>
+              <span class="chip-label">Crecimiento:</span>
+              <span id="detail-growth" class="chip-value">Medium</span>
+            </div>
+            <div class="detail-chip">
+              <span class="material-symbols-rounded chip-icon">build_circle</span>
+              <span class="chip-label">Mantenimiento:</span>
+              <span id="detail-maintenance" class="chip-value">Medium</span>
+            </div>
+            <div class="detail-chip">
+              <span class="material-symbols-rounded chip-icon">assignment_ind</span>
+              <span class="chip-label">Atención:</span>
+              <span id="detail-care" class="chip-value">Medium</span>
+            </div>
           </div>
         </div>
       </div>
-      <div class="modal-footer">
-        <button type="button" id="detail-close-btn" class="btn btn-secondary">Cerrar</button>
+      
+      <!-- Pie del Modal -->
+      <div class="detail-modal-footer">
+        <button type="button" id="detail-close-btn" class="btn-oval-close">Cerrar</button>
       </div>
     </div>
   </div>

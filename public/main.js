@@ -33,6 +33,14 @@ document.addEventListener('DOMContentLoaded', () => {
   let selectedCatalogItem = null;
   let tempPhotoUrl = null;
 
+  // Variables de control del catálogo oficial
+  let catalogPage = 1;
+  let catalogMaxPage = 1;
+  let catalogSearchQuery = '';
+  let catalogFilterIndoor = '';
+  let catalogFilterSunlight = '';
+  let catalogFilterPoisonous = '';
+
   // --- ELEMENTOS DEL DOM ---
   const authContainer = document.getElementById('auth-container');
   const appContainer = document.getElementById('app-container');
@@ -102,7 +110,22 @@ document.addEventListener('DOMContentLoaded', () => {
     if (token) {
       showApp();
     } else {
-      showAuth();
+      const params = new URLSearchParams(window.location.search);
+      const mode = params.get('mode');
+      if (mode === 'login' || mode === 'register') {
+        authContainer.classList.remove('hidden');
+        appContainer.classList.add('hidden');
+        document.body.style.backgroundColor = '#e2f5e7';
+        if (mode === 'login') {
+          loginForm.classList.add('active');
+          registerForm.classList.remove('active');
+        } else {
+          loginForm.classList.remove('active');
+          registerForm.classList.add('active');
+        }
+      } else {
+        window.location.href = 'landing.html';
+      }
     }
   }
 
@@ -253,11 +276,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- CONTROL DE VISTAS (SPA) ---
-  function showAuth() {
-    authContainer.classList.remove('hidden');
-    appContainer.classList.add('hidden');
-    document.body.style.backgroundColor = '#e2f5e7';
-  }
 
   function showApp() {
     authContainer.classList.add('hidden');
@@ -268,8 +286,18 @@ document.addEventListener('DOMContentLoaded', () => {
       profileName.textContent = user.nombre;
       userAvatarInitial.textContent = user.nombre.charAt(0).toUpperCase();
     }
+
+    // Toggle Admin sidebar item
+    const navAdmin = document.getElementById('nav-admin');
+    if (navAdmin) {
+      if (user && user.rol === 'admin') {
+        navAdmin.classList.remove('hidden');
+      } else {
+        navAdmin.classList.add('hidden');
+      }
+    }
+
     initSectionNavigation();
-    loadDailyTip();
     loadDashboardData();
   }
 
@@ -278,9 +306,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(item => {
       item.addEventListener('click', (e) => {
-        e.preventDefault();
         const section = item.dataset.section;
-        navigateToSection(section);
+        if (section) {
+          e.preventDefault();
+          navigateToSection(section);
+        }
       });
     });
   }
@@ -317,6 +347,8 @@ document.addEventListener('DOMContentLoaded', () => {
       renderRiegoSection();
     } else if (sectionName === 'calendario-mensual') {
       renderCalendarioMensualSection();
+    } else if (sectionName === 'catalogo') {
+      renderCatalogSection();
     }
   }
 
@@ -326,7 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const isAbonoCrit = getDaysUntilAbono(plant) <= 0;
     const daysLeftRiego = getDaysUntilWatering(plant);
     const daysLeftAbono = getDaysUntilAbono(plant);
-    const imgUrl = plant.catalog_imagen_url || plant.imagen_url || catalog.imagen_url;
+    const imgUrl = plant.imagen_url || plant.catalog_imagen_url || catalog.imagen_url;
 
     const card = document.createElement('div');
     card.className = `plant-card-ref ${isWaterCrit ? 'card-critico' : ''}`;
@@ -352,23 +384,19 @@ document.addEventListener('DOMContentLoaded', () => {
           <span class="plant-ref-species">${catalog.nombre_comun}</span>
         </div>
 
-        <div class="plant-ref-indicators">
-          <div class="plant-indicator-row">
-            <span>Riego:</span>
-            <span class="plant-indicator-val" style="color: ${isWaterCrit ? 'var(--critical)' : 'var(--healthy)'};">
-              ${daysLeftRiego <= 0 ? 'Toca Riego' : `En ${daysLeftRiego} d`}
-            </span>
-          </div>
-          <div class="plant-indicator-row">
-            <span>Abono:</span>
-            <span class="plant-indicator-val" style="color: ${isAbonoCrit ? 'var(--warning-yellow)' : 'var(--text-main)'};">
-              ${daysLeftAbono <= 0 ? 'Toca Abono' : `En ${daysLeftAbono} d`}
-            </span>
-          </div>
-          <div class="plant-indicator-row">
-            <span>Luz:</span>
-            <span class="plant-indicator-val">${catalog.luz_recomendada}</span>
-          </div>
+        <div class="plant-ref-indicators-pills">
+          <span class="plant-indicator-pill ${isWaterCrit ? 'pill-crit' : 'pill-ok'}" title="Próximo riego">
+            <span class="material-symbols-rounded">water_drop</span>
+            <span>${daysLeftRiego <= 0 ? 'Riego ya' : `${daysLeftRiego}d`}</span>
+          </span>
+          <span class="plant-indicator-pill ${isAbonoCrit ? 'pill-warning' : 'pill-info'}" title="Próxima fertilización">
+            <span class="material-symbols-rounded">spa</span>
+            <span>${daysLeftAbono <= 0 ? 'Abono ya' : `${daysLeftAbono}d`}</span>
+          </span>
+          <span class="plant-indicator-pill pill-light" title="Luz recomendada">
+            <span class="material-symbols-rounded">light_mode</span>
+            <span>${translateSunlight(catalog.luz_recomendada).replace('Luz: ', '')}</span>
+          </span>
         </div>
 
         <div class="plant-card-actions-row">
@@ -392,17 +420,37 @@ document.addEventListener('DOMContentLoaded', () => {
     return card;
   }
 
+  // Declared at outer scope
+  let activeDetailPlantId = null;
+
+  const detailViewContainer = document.getElementById('detail-view-container');
+  const detailEditFormContainer = document.getElementById('detail-edit-form-container');
+  const detailEditBtn = document.getElementById('detail-edit-btn');
+  const detailEditCancel = document.getElementById('detail-edit-cancel');
+  const detailEditForm = document.getElementById('detail-edit-form');
+
+  function resetDetailModalMode() {
+    if (detailViewContainer) detailViewContainer.classList.remove('hidden');
+    if (detailEditFormContainer) detailEditFormContainer.classList.add('hidden');
+  }
+
   // Open plant detail modal
   function openPlantDetail(id) {
+    activeDetailPlantId = id;
+    resetDetailModalMode();
+
     const plant = plants.find(p => p.id_planta_usuario === id);
     if (!plant || !plantDetailModal) return;
     const catalog = getCatalogItem(plant);
     detailName.textContent = plant.nombre_personalizado;
-    detailImage.src = plant.catalog_imagen_url || plant.imagen_url || catalog.imagen_url;
+    detailImage.src = plant.imagen_url || plant.catalog_imagen_url || catalog.imagen_url;
     detailSpecies.textContent = `Especie: ${catalog.nombre_comun} (${catalog.nombre_cientifico})`;
-    detailAcquired.textContent = `Adquirida: ${plant.fecha_adquisicion}`;
-    detailLastWatered.textContent = `Último riego: ${plant.fecha_ultimo_riego}`;
-    const freq = plant.frecuencia_riego_dias || catalog.frecuencia_riego_dias;
+    
+    // Format dates nicely
+    detailAcquired.textContent = `Adquirida: ${plant.fecha_adquisicion ? formatDate(plant.fecha_adquisicion) : 'No registrada'}`;
+    detailLastWatered.textContent = `Último riego: ${plant.fecha_ultimo_riego ? formatDate(plant.fecha_ultimo_riego) : 'No registrado'}`;
+    
+    const freq = plant.frecuencia_riego_dias || plant.catalog_frecuencia_riego_dias || catalog.frecuencia_riego_dias || 7;
     detailFrequency.textContent = `Frecuencia de riego: cada ${freq} días`;
     const days = getDaysUntilWatering(plant);
     detailNextWatering.textContent = days <= 0 ? 'Próximo riego: Hoy' : `Próximo riego: en ${days} días`;
@@ -410,25 +458,123 @@ document.addEventListener('DOMContentLoaded', () => {
     const descriptionEl = document.getElementById('detail-description');
     const careGuidesEl = document.getElementById('detail-care-guides');
     const annexContainer = document.getElementById('detail-annex-container');
-    const annexImg = document.getElementById('detail-annex-image');
 
     if (descriptionEl) descriptionEl.textContent = `Descripción: ${catalog.descripcion || 'Sin descripción disponible.'}`;
     if (careGuidesEl) careGuidesEl.textContent = `Cuidados Básicos: ${catalog.cuidados_basicos || 'Sin cuidados específicos sugeridos.'}`;
 
-    if (annexContainer && annexImg) {
-      if (plant.imagen_url && plant.imagen_url !== plant.catalog_imagen_url && plant.imagen_url !== catalog.imagen_url) {
-        annexImg.src = plant.imagen_url;
-        annexContainer.classList.remove('hidden');
-      } else {
-        annexContainer.classList.add('hidden');
+    // Minimalist badges for watering and sunlight
+    const detailBadges = document.getElementById('detail-badges');
+    if (detailBadges) {
+      detailBadges.innerHTML = '';
+
+      // Watering Badge
+      const waterBadge = document.createElement('span');
+      waterBadge.style = 'padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; background-color: var(--healthy-bg); border: 1px solid var(--healthy-border); color: var(--primary-dark); display: inline-flex; align-items: center; gap: 4px;';
+      waterBadge.innerHTML = `<span class="material-symbols-rounded" style="font-size: 14px; color: var(--primary);">water_drop</span> <span>Riego: cada ${freq} días</span>`;
+      detailBadges.appendChild(waterBadge);
+
+      // Sunlight Badge
+      if (catalog.luz_recomendada) {
+        const lightBadge = document.createElement('span');
+        lightBadge.style = 'padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; background-color: var(--warning-yellow-bg); border: 1px solid #fff59d; color: var(--warning-yellow); display: inline-flex; align-items: center; gap: 4px;';
+        lightBadge.innerHTML = `<span class="material-symbols-rounded" style="font-size: 14px; color: var(--warning-yellow);">light_mode</span> <span>Luz: ${translateSunlight(catalog.luz_recomendada)}</span>`;
+        detailBadges.appendChild(lightBadge);
       }
+    }
+
+    // Personal description display
+    const personalDescContainer = document.getElementById('detail-personal-desc-container');
+    const personalDescText = document.getElementById('detail-personal-description');
+    if (personalDescContainer && personalDescText) {
+      if (plant.descripcion_personal && plant.descripcion_personal.trim() !== '') {
+        personalDescText.textContent = plant.descripcion_personal;
+        personalDescContainer.classList.remove('hidden');
+      } else {
+        personalDescContainer.classList.add('hidden');
+      }
+    }
+
+    // Hide custom photo annex since we prioritize it as main image
+    if (annexContainer) {
+      annexContainer.classList.add('hidden');
     }
 
     plantDetailModal.classList.add('show');
   }
 
-  if (detailClose) detailClose.addEventListener('click', () => plantDetailModal.classList.remove('show'));
-  if (detailCloseBtn) detailCloseBtn.addEventListener('click', () => plantDetailModal.classList.remove('show'));
+  if (detailClose) detailClose.addEventListener('click', () => { plantDetailModal.classList.remove('show'); resetDetailModalMode(); });
+  if (detailCloseBtn) detailCloseBtn.addEventListener('click', () => { plantDetailModal.classList.remove('show'); resetDetailModalMode(); });
+
+  if (detailEditBtn) {
+    detailEditBtn.addEventListener('click', () => {
+      const plant = plants.find(p => p.id_planta_usuario === activeDetailPlantId);
+      if (!plant) return;
+      const catalog = getCatalogItem(plant);
+      const freq = plant.frecuencia_riego_dias || plant.catalog_frecuencia_riego_dias || catalog.frecuencia_riego_dias || 7;
+
+      document.getElementById('detail-edit-nickname').value = plant.nombre_personalizado || '';
+      document.getElementById('detail-edit-frequency').value = freq;
+      document.getElementById('detail-edit-acquired').value = plant.fecha_adquisicion ? plant.fecha_adquisicion.split('T')[0] : '';
+      document.getElementById('detail-edit-last-watered').value = plant.fecha_ultimo_riego ? plant.fecha_ultimo_riego.split('T')[0] : '';
+      document.getElementById('detail-edit-description').value = plant.descripcion_personal || '';
+
+      detailViewContainer.classList.add('hidden');
+      detailEditFormContainer.classList.remove('hidden');
+    });
+  }
+
+  if (detailEditCancel) {
+    detailEditCancel.addEventListener('click', resetDetailModalMode);
+  }
+
+  if (detailEditForm) {
+    detailEditForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const plant = plants.find(p => p.id_planta_usuario === activeDetailPlantId);
+      if (!plant) return;
+
+      const nickname = document.getElementById('detail-edit-nickname').value;
+      const freq = parseInt(document.getElementById('detail-edit-frequency').value, 10);
+      const acqDate = document.getElementById('detail-edit-acquired').value;
+      const lastWatered = document.getElementById('detail-edit-last-watered').value;
+      const desc = document.getElementById('detail-edit-description').value;
+
+      try {
+        const response = await fetch(`/api/plantas/${activeDetailPlantId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            nombre_personalizado: nickname,
+            frecuencia_riego_dias: freq,
+            fecha_adquisicion: acqDate,
+            fecha_ultimo_riego: lastWatered,
+            descripcion_personal: desc
+          })
+        });
+
+        if (!response.ok) throw new Error('Error al actualizar planta');
+        const resData = await response.json();
+        
+        // Update local object
+        Object.assign(plant, resData.data);
+
+        showToast('Guardado', 'Los cambios han sido guardados correctamente.', 'success');
+        resetDetailModalMode();
+        
+        // Refresh details display in the modal
+        openPlantDetail(activeDetailPlantId);
+        
+        // Refresh other views
+        refreshAllViews();
+      } catch (err) {
+        console.error('Error al guardar cambios de la planta:', err);
+        showToast('Error', 'No se pudieron guardar los cambios en el servidor.', 'warning');
+      }
+    });
+  }
 
   // Sidebar toggle
   const sidebarToggle = document.getElementById('sidebar-toggle');
@@ -524,8 +670,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const daysAbono = getDaysUntilAbono(plant);
       const isWaterCrit = daysRiego <= 0;
       const isAbonoCrit = daysAbono <= 0;
-      const imgUrl = plant.catalog_imagen_url || plant.imagen_url || catalog.imagen_url;
-      const riegoPercent = Math.max(0, Math.min(100, Math.round(((catalog.frecuencia_riego_dias - Math.max(0, daysRiego)) / catalog.frecuencia_riego_dias) * 100)));
+      const imgUrl = plant.imagen_url || plant.catalog_imagen_url || catalog.imagen_url;
+      const freq = plant.frecuencia_riego_dias || plant.catalog_frecuencia_riego_dias || catalog.frecuencia_riego_dias || 7;
+      const riegoPercent = Math.max(0, Math.min(100, Math.round(((freq - Math.max(0, daysRiego)) / freq) * 100)));
       const abonoPercent = Math.max(0, Math.min(100, Math.round((((catalog.abono_frecuencia_dias || 30) - Math.max(0, daysAbono)) / (catalog.abono_frecuencia_dias || 30)) * 100)));
 
       const card = document.createElement('div');
@@ -633,7 +780,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sortedPlants.forEach(plant => {
       const catalog = getCatalogItem(plant);
       const daysLeft = getDaysUntilWatering(plant);
-      const totalDays = plant.frecuencia_riego_dias || catalog.frecuencia_riego_dias;
+      const totalDays = plant.frecuencia_riego_dias || plant.catalog_frecuencia_riego_dias || catalog.frecuencia_riego_dias || 7;
 
       const percent = Math.max(0, Math.min(100, Math.round((daysLeft / totalDays) * 100)));
 
@@ -644,7 +791,7 @@ document.addEventListener('DOMContentLoaded', () => {
         color = '#ff9800';
       }
 
-      const imgUrl = plant.catalog_imagen_url || plant.imagen_url || catalog.imagen_url;
+      const imgUrl = plant.imagen_url || plant.catalog_imagen_url || catalog.imagen_url;
 
       const row = document.createElement('div');
       row.className = 'riego-plant-row';
@@ -831,7 +978,7 @@ document.addEventListener('DOMContentLoaded', () => {
               dayEvents.push({
                 plant,
                 type: log.tipo_cuidado === 'Riego' ? 'water' : 'abono',
-                label: `${log.tipo_cuidado === 'Riego' ? 'Riego' : 'Abono'} de ${plant.nombre_personalizado} 🗸`,
+                label: `${log.tipo_cuidado === 'Riego' ? 'Riego' : 'Abono'} de ${plant.nombre_personalizado}`,
                 isPast: true
               });
             }
@@ -843,14 +990,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const lastWater = new Date(plant.fecha_ultimo_riego);
         lastWater.setHours(0, 0, 0, 0);
         let nextWater = new Date(lastWater.getTime());
+        const freq = plant.frecuencia_riego_dias || plant.catalog_frecuencia_riego_dias || catalog.frecuencia_riego_dias || 7;
         for (let i = 1; i <= 5; i++) {
-          nextWater.setDate(nextWater.getDate() + catalog.frecuencia_riego_dias);
+          nextWater.setDate(nextWater.getDate() + freq);
           const nextWaterTime = nextWater.getTime();
           if (nextWaterTime === cellDate.getTime() && nextWaterTime >= todayDate.getTime()) {
             dayEvents.push({
               plant,
               type: 'water',
-              label: `Riego de ${plant.nombre_personalizado} 💧`,
+              label: `Riego de ${plant.nombre_personalizado}`,
               isPast: false
             });
             break;
@@ -869,7 +1017,7 @@ document.addEventListener('DOMContentLoaded', () => {
             dayEvents.push({
               plant,
               type: 'abono',
-              label: `Abono de ${plant.nombre_personalizado} 🌿`,
+              label: `Abono de ${plant.nombre_personalizado}`,
               isPast: false
             });
             break;
@@ -943,14 +1091,15 @@ document.addEventListener('DOMContentLoaded', () => {
       // Próximo Riego
       const lastWater = new Date(plant.fecha_ultimo_riego);
       const nextWater = new Date(lastWater.getTime());
-      nextWater.setDate(nextWater.getDate() + catalog.frecuencia_riego_dias);
+      const freq = plant.frecuencia_riego_dias || plant.catalog_frecuencia_riego_dias || catalog.frecuencia_riego_dias || 7;
+      nextWater.setDate(nextWater.getDate() + freq);
       nextWater.setHours(0, 0, 0, 0);
 
       eventsList.push({
         plant,
         type: 'water',
         date: nextWater,
-        label: `Riego de ${plant.nombre_personalizado} 💧`,
+        label: `Riego de ${plant.nombre_personalizado}`,
         icon: 'water_drop'
       });
 
@@ -964,7 +1113,7 @@ document.addEventListener('DOMContentLoaded', () => {
         plant,
         type: 'abono',
         date: nextAbono,
-        label: `Abono de ${plant.nombre_personalizado} 🌿`,
+        label: `Abono de ${plant.nombre_personalizado}`,
         icon: 'spa'
       });
     });
@@ -1113,15 +1262,18 @@ document.addEventListener('DOMContentLoaded', () => {
           body: JSON.stringify({ email, password })
         });
 
-        if (!response.ok) throw new Error('Credenciales incorrectas');
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.message || 'Credenciales incorrectas');
+        }
 
         const data = await response.json();
-        saveSession(data.token, { nombre: data.nombre || email.split('@')[0], email });
+        saveSession(data.token, data.user);
         showToast('¡Sesión Iniciada!', 'Bienvenido de vuelta a Petalia.', 'success');
         showApp();
       } catch (err) {
         console.error('Error al iniciar sesión:', err.message);
-        showToast('Error de Acceso', 'Credenciales incorrectas o servidor no disponible.', 'warning');
+        showToast('Error de Acceso', err.message || 'Credenciales incorrectas o servidor no disponible.', 'warning');
       }
     });
   }
@@ -1133,6 +1285,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const email = document.getElementById('register-email').value;
       const password = document.getElementById('register-password').value;
 
+      // Frontend password validation
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+      if (!passwordRegex.test(password)) {
+        showToast('Contraseña Insegura', 'Mínimo 8 caracteres, con una mayúscula, una minúscula, un número y un caracter especial.', 'warning');
+        return;
+      }
+
       try {
         const response = await fetch('/api/auth/register', {
           method: 'POST',
@@ -1140,15 +1299,18 @@ document.addEventListener('DOMContentLoaded', () => {
           body: JSON.stringify({ nombre, email, password })
         });
 
-        if (!response.ok) throw new Error('Error al registrar usuario');
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.message || 'Error al registrar usuario');
+        }
 
         const data = await response.json();
-        saveSession(data.token, { nombre, email });
+        saveSession(data.token, data.user);
         showToast('Registro Exitoso', 'Tu cuenta de Petalia ha sido creada.', 'success');
         showApp();
       } catch (err) {
         console.error('Error al registrar:', err.message);
-        showToast('Error de Registro', 'No se pudo crear la cuenta. Intente con otro correo.', 'warning');
+        showToast('Error de Registro', err.message || 'No se pudo crear la cuenta.', 'warning');
       }
     });
   }
@@ -1160,122 +1322,9 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.removeItem('petalia_jwt_token');
       localStorage.removeItem('petalia_user_info');
       showToast('Sesión Finalizada', 'Has salido del sistema.', 'info');
-      showAuth();
-    });
-  }
-
-  // --- FLOATING BOT CHAT ---
-  const floatingBotBtn = document.getElementById('floating-bot-btn');
-  const floatingChatPanel = document.getElementById('floating-chat-panel');
-  const closeChatPanel = document.getElementById('close-chat-panel');
-  const chatInput = document.getElementById('chat-input');
-  const chatSendBtn = document.getElementById('chat-send-btn');
-  const chatMessages = document.getElementById('chat-messages');
-
-  const BOT_RESPONSES = [
-    '¡Excelente pregunta! La Monstera necesita riego cada 7 días con luz indirecta 🌿',
-    'Recuerda que el Aloe Vera necesita muy poca agua: ¡riego cada 14 días!',
-    'El Pothos es ideal para principiantes: luz indirecta y riego cada 5 días.',
-    'Para un jardín sano, evita el exceso de riego. La mayoría de las plantas prefieren secarse entre riegos.',
-    '¡Fertiliza tus plantas cada 30 días en primavera para maximizar su crecimiento! 🌱',
-    'La temperatura ideal para la mayoría de plantas exóticas es entre 18°C y 28°C.',
-    'Limpia las hojas con un paño húmedo mensualmente para optimizar la fotosíntesis.'
-  ];
-
-  function generateBotResponse(userText) {
-    const txt = userText.toLowerCase();
-
-    // Buscar mención de planta por nombre
-    const matchedPlant = plants.find(p => txt.includes(p.nombre_personalizado.toLowerCase()));
-    // Si pregunta por riego (cada cuanto / cuando) y menciona planta
-    if (matchedPlant && (txt.includes('cada') || txt.includes('cada cuanto') || txt.includes('cuando') || txt.includes('riego') || txt.includes('regar'))) {
-      const catalog = getCatalogItem(matchedPlant);
-      const freq = catalog.frecuencia_riego_dias || 7;
-      const days = getDaysUntilWatering(matchedPlant);
-      if (days <= 0) return `${matchedPlant.nombre_personalizado} necesita riego hoy. Frecuencia típica: cada ${freq} días.`;
-      return `${matchedPlant.nombre_personalizado} necesita riego en ${days} días (frecuencia: cada ${freq} días).`;
-    }
-
-    // Si pregunta por abono
-    if (matchedPlant && (txt.includes('abono') || txt.includes('abonar') || txt.includes('fertil'))) {
-      const catalog = getCatalogItem(matchedPlant);
-      const abFreq = catalog.abono_frecuencia_dias || 30;
-      const daysAb = getDaysUntilAbono(matchedPlant);
-      if (daysAb <= 0) return `${matchedPlant.nombre_personalizado} necesita abono hoy. Frecuencia típica: cada ${abFreq} días.`;
-      return `${matchedPlant.nombre_personalizado} necesita abono en ${daysAb} días (frecuencia: cada ${abFreq} días).`;
-    }
-
-    // Si pregunta por luz o temperatura
-    if (matchedPlant && (txt.includes('luz') || txt.includes('temperatura') || txt.includes('clima'))) {
-      const catalog = getCatalogItem(matchedPlant);
-      return `${matchedPlant.nombre_personalizado}: luz recomendada '${catalog.luz_recomendada}', temperatura ideal ${catalog.temperatura_min}°C - ${catalog.temperatura_max}°C.`;
-    }
-
-    // Si la pregunta menciona una planta pero sin palabra clave, dar resumen breve
-    if (matchedPlant) {
-      const catalog = getCatalogItem(matchedPlant);
-      return `${matchedPlant.nombre_personalizado} — ${catalog.nombre_comun}. Riego cada ${catalog.frecuencia_riego_dias} días, abono cada ${catalog.abono_frecuencia_dias || 30} días.`;
-    }
-
-    // Pregunta general sobre 'riego' sin planta
-    if (txt.includes('riego') || txt.includes('regar')) {
-      return 'En general, espera a que la superficie del sustrato esté seca antes de regar; la mayoría de plantas de interior riega cada 5-14 días según especie.';
-    }
-
-    // Fallback aleatorio
-    return BOT_RESPONSES[Math.floor(Math.random() * BOT_RESPONSES.length)];
-  }
-
-  function addChatMessage(text, isBot = true) {
-    if (!chatMessages) return;
-    const msg = document.createElement('div');
-    msg.className = `chat-msg ${isBot ? 'bot' : 'user'}`;
-    if (isBot) {
-      msg.innerHTML = `<span class="material-symbols-rounded chat-msg-icon">eco</span><p>${text}</p>`;
-    } else {
-      msg.innerHTML = `<p>${text}</p>`;
-    }
-    chatMessages.appendChild(msg);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  }
-
-  if (floatingBotBtn) {
-    floatingBotBtn.addEventListener('click', () => {
-      floatingChatPanel.classList.toggle('hidden');
-      if (!floatingChatPanel.classList.contains('hidden') && chatInput) {
-        chatInput.focus();
-      }
-    });
-  }
-
-  if (closeChatPanel) {
-    closeChatPanel.addEventListener('click', () => {
-      floatingChatPanel.classList.add('hidden');
-    });
-  }
-
-  function sendChatMessage() {
-    if (!chatInput || !chatInput.value.trim()) return;
-    const userText = chatInput.value.trim();
-    addChatMessage(userText, false);
-    chatInput.value = '';
-    setTimeout(() => {
-      const resp = generateBotResponse(userText);
-      addChatMessage(resp, true);
-    }, 500);
-  }
-
-  if (chatSendBtn) chatSendBtn.addEventListener('click', sendChatMessage);
-  if (chatInput) chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendChatMessage(); });
-
-  // Boton consejo rapido en inicio
-  const btnQuickTip = document.getElementById('btn-bot-quick-tip');
-  if (btnQuickTip) {
-    btnQuickTip.addEventListener('click', () => {
-      const tipEl = document.getElementById('bot-speech-inicio');
-      if (tipEl) {
-        tipEl.textContent = BOT_RESPONSES[Math.floor(Math.random() * BOT_RESPONSES.length)];
-      }
+      setTimeout(() => {
+        window.location.href = 'landing.html';
+      }, 1000);
     });
   }
 
@@ -1317,13 +1366,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- CONSEJOS DIARIOS DE JARDINERÍA ---
   const GARDENING_TIPS = [
-    "¡Consejo del día! Las Monsteras prefieren que el sustrato se seque por completo antes de volver a regar. 🌿",
-    "¡Consejo del día! El Aloe Vera adora el sol directo; riégalo solo cuando la tierra esté totalmente seca. ☀️",
-    "¡Consejo del día! Limpia las hojas de tus plantas con un paño húmedo para optimizar la fotosíntesis. 🍃",
-    "¡Consejo del día! Las suculentas son propensas a la pudrición de raíz: prioriza el drenaje del sustrato. 🌵",
-    "¡Consejo del día! Fertiliza tus plantas verdes durante el periodo de crecimiento activo (primavera/verano). 🌱",
-    "¡Consejo del día! Evita colocar tus plantas cerca de corrientes de aire frío o calefactores directos. ❄️",
-    "¡Consejo del día! Si las puntas de las hojas se ponen marrones, es probable que a tu planta le falte humedad ambiental. 💧"
+    "Consejo del dia: Las Monsteras prefieren que el sustrato se seque por completo antes de volver a regar.",
+    "Consejo del dia: El Aloe Vera adora el sol directo; riegalo solo cuando la tierra este totalmente seca.",
+    "Consejo del dia: Limpia las hojas de tus plantas con un paño humedo para optimizar la fotosintesis.",
+    "Consejo del dia: Las suculentas son propensas a la pudricion de raiz: prioriza el drenaje del sustrato.",
+    "Consejo del dia: Fertiliza tus plantas verdes durante el periodo de crecimiento activo (primavera/verano).",
+    "Consejo del dia: Evita colocar tus plantas cerca de corrientes de aire frio o calefactores directos.",
+    "Consejo del dia: Si las puntas de las hojas se ponen marrones, es probable que a tu planta le falte humedad ambiental."
   ];
 
   function loadDailyTip() {
@@ -1350,7 +1399,8 @@ document.addEventListener('DOMContentLoaded', () => {
       // Evento de Riego
       const lastWater = new Date(plant.fecha_ultimo_riego);
       const nextWater = new Date(lastWater.getTime());
-      nextWater.setDate(nextWater.getDate() + catalog.frecuencia_riego_dias);
+      const freq = plant.frecuencia_riego_dias || plant.catalog_frecuencia_riego_dias || catalog.frecuencia_riego_dias || 7;
+      nextWater.setDate(nextWater.getDate() + freq);
       nextWater.setHours(0, 0, 0, 0);
       const diffWater = nextWater - today;
       const daysWater = Math.ceil(diffWater / (1000 * 60 * 60 * 24));
@@ -1360,7 +1410,7 @@ document.addEventListener('DOMContentLoaded', () => {
         type: 'water',
         date: nextWater,
         daysLeft: daysWater,
-        label: `Riego de ${plant.nombre_personalizado} 💧`,
+        label: `Riego de ${plant.nombre_personalizado}`,
         icon: 'water_drop'
       });
 
@@ -1377,7 +1427,7 @@ document.addEventListener('DOMContentLoaded', () => {
         type: 'fertilize',
         date: nextAbono,
         daysLeft: daysAbono,
-        label: `Abono de ${plant.nombre_personalizado} 🌿`,
+        label: `Abono de ${plant.nombre_personalizado}`,
         icon: 'spa'
       });
     });
@@ -1655,6 +1705,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderAlertsWidget();
     renderRecentTimeline();
     renderWateringAlgorithm();
+    renderCuriosidadesWidget();
   }
 
   function renderAlertsWidget() {
@@ -1793,7 +1844,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } else {
       targetText += `En ${days} días`;
-      const percent = Math.max(0, Math.min(100, Math.round(((catalog.frecuencia_riego_dias - days) / catalog.frecuencia_riego_dias) * 100)));
+      const freq = target.frecuencia_riego_dias || target.catalog_frecuencia_riego_dias || catalog.frecuencia_riego_dias || 7;
+      const percent = Math.max(0, Math.min(100, Math.round(((freq - days) / freq) * 100)));
       if (riegoTimelineNodeTime) {
         riegoTimelineNodeTime.textContent = `En ${days}d`;
         riegoTimelineNodeTime.style.left = `${percent}%`;
@@ -1990,7 +2042,7 @@ document.addEventListener('DOMContentLoaded', () => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!response.ok) throw new Error('No se pudo eliminar la planta');
-      
+
       plants = plants.filter(p => p.id_planta_usuario !== id);
       showToast('Eliminada', 'La planta ha sido removida de la colección.', 'info');
       refreshAllViews();
@@ -2086,13 +2138,19 @@ document.addEventListener('DOMContentLoaded', () => {
         catalogSearch.value = `${item.nombre_comun} (${item.nombre_cientifico})`;
         selectedCatalogId.value = item.id_catalogo;
         catalogSuggestions.classList.add('hidden');
-        
+
+        // Populate watering frequency
+        const plantWateringFreq = document.getElementById('plant-watering-frequency');
+        if (plantWateringFreq) {
+          plantWateringFreq.value = item.frecuencia_riego_dias || 7;
+        }
+
         // Populate and display selected catalog plant preview
         const previewDiv = document.getElementById('catalog-plant-preview');
         const previewImg = document.getElementById('preview-catalog-img');
         const previewName = document.getElementById('preview-catalog-name');
         const previewDesc = document.getElementById('preview-catalog-desc');
-        
+
         if (previewDiv && previewImg && previewName && previewDesc) {
           previewImg.src = item.imagen_url || 'https://images.unsplash.com/photo-1596547609652-9cf5d8d76921?auto=format&fit=crop&q=80&w=600';
           previewName.textContent = `${item.nombre_comun} (${item.nombre_cientifico})`;
@@ -2245,6 +2303,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const nickname = plantNickname.value;
     const acqDate = plantAcquisitionDate.value;
     const lastWateredDate = plantLastWatered.value;
+    const personalDescInput = document.getElementById('plant-description');
+    const personalDesc = personalDescInput ? personalDescInput.value : '';
+    const wateringFreqInput = document.getElementById('plant-watering-frequency');
+    const wateringFreq = wateringFreqInput ? wateringFreqInput.value : '';
 
     if (!catId) {
       showToast('Formulario Incompleto', 'Selecciona una planta del catálogo.', 'warning');
@@ -2257,6 +2319,8 @@ document.addEventListener('DOMContentLoaded', () => {
       formData.append('nombre_personalizado', nickname);
       formData.append('fecha_adquisicion', acqDate);
       formData.append('fecha_ultimo_riego', lastWateredDate);
+      formData.append('descripcion_personal', personalDesc);
+      formData.append('frecuencia_riego_dias', wateringFreq);
       if (plantPhotoInput.files[0]) {
         formData.append('foto', plantPhotoInput.files[0]);
       }
@@ -2268,7 +2332,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       if (!response.ok) throw new Error('Error al registrar planta en el servidor');
-      
+
       closeModal();
       await loadDashboardData();
       showToast('Guardado', `Planta '${nickname}' añadida exitosamente.`, 'success');
@@ -2301,7 +2365,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function getDaysUntilWatering(plant) {
     const catalog = getCatalogItem(plant);
     const lastWatered = new Date(plant.fecha_ultimo_riego);
-    const freq = plant.frecuencia_riego_dias || catalog.frecuencia_riego_dias;
+    const freq = plant.frecuencia_riego_dias || plant.catalog_frecuencia_riego_dias || catalog.frecuencia_riego_dias || 7;
     const nextWatered = new Date(lastWatered.getTime());
     nextWatered.setDate(nextWatered.getDate() + freq);
 
@@ -2333,6 +2397,428 @@ document.addEventListener('DOMContentLoaded', () => {
     const adjusted = new Date(date.getTime() + offset);
     return adjusted.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
   }
+
+  // --- TRADUCCIÓN Y REQUERIMIENTO DE RIEGO ---
+  function translateWatering(w) {
+    if (!w) return 'Moderado';
+    const l = w.toLowerCase();
+    if (l.includes('frequent')) return 'Riego: Frecuente';
+    if (l.includes('average')) return 'Riego: Moderado';
+    if (l.includes('minimum')) return 'Riego: Mínimo';
+    if (l.includes('none')) return 'Riego: Ninguno';
+    return `Riego: ${w}`;
+  }
+
+  function translateSunlight(s) {
+    if (!s) return 'Luz: Indirecta';
+    const item = Array.isArray(s) ? s[0] : s;
+    const l = item.toLowerCase();
+    if (l.includes('full_shade')) return 'Sombra completa';
+    if (l.includes('part_shade')) return 'Sombra parcial';
+    if (l.includes('sun-part_shade')) return 'Sol parcial';
+    if (l.includes('full_sun')) return 'Sol directo';
+    return `Luz: ${item}`;
+  }
+
+  // --- FUNCIONES DEL APARTADO DE CATÁLOGO ---
+  async function renderCatalogSection() {
+    const grid = document.getElementById('catalog-grid');
+    const loader = document.getElementById('catalog-loader');
+    const pageInfo = document.getElementById('catalog-page-info');
+    const btnPrev = document.getElementById('btn-catalog-prev');
+    const btnNext = document.getElementById('btn-catalog-next');
+
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    if (loader) loader.classList.remove('hidden');
+
+    try {
+      let url = `/api/catalogo/species-list?page=${catalogPage}`;
+      if (catalogSearchQuery) url += `&q=${encodeURIComponent(catalogSearchQuery)}`;
+      if (catalogFilterIndoor !== '') url += `&indoor=${catalogFilterIndoor}`;
+      if (catalogFilterSunlight) url += `&sunlight=${catalogFilterSunlight}`;
+      if (catalogFilterPoisonous !== '') url += `&poisonous=${catalogFilterPoisonous}`;
+
+      const res = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Error al obtener lista de especies');
+
+      const response = await res.json();
+      const items = response.data || [];
+      catalogMaxPage = response.last_page || 1;
+
+      if (loader) loader.classList.add('hidden');
+
+      if (items.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state-text" style="text-align:center; padding:32px; grid-column:1/-1; width: 100%;">
+            <span class="material-symbols-rounded" style="font-size:40px; color:var(--accent);">menu_book</span>
+            <p style="font-size:14px; color:var(--text-muted); margin-top:8px;">No se encontraron especies con los filtros seleccionados.</p>
+          </div>
+        `;
+        if (pageInfo) pageInfo.textContent = `Página ${catalogPage} de ${catalogMaxPage}`;
+        if (btnPrev) btnPrev.disabled = true;
+        if (btnNext) btnNext.disabled = true;
+        return;
+      }
+
+      items.forEach(plant => {
+        const card = createCatalogCard(plant);
+        grid.appendChild(card);
+      });
+
+      if (pageInfo) pageInfo.textContent = `Página ${catalogPage} de ${catalogMaxPage}`;
+      if (btnPrev) btnPrev.disabled = catalogPage <= 1;
+      if (btnNext) btnNext.disabled = catalogPage >= catalogMaxPage;
+
+    } catch (err) {
+      console.error('Error al cargar catálogo:', err.message);
+      if (loader) loader.classList.add('hidden');
+      grid.innerHTML = `
+        <div class="empty-state-text" style="text-align:center; padding:32px; grid-column:1/-1; width: 100%;">
+          <span class="material-symbols-rounded" style="font-size:40px; color:var(--critical);">error</span>
+          <p style="font-size:14px; color:var(--text-muted); margin-top:8px;">Error al conectar con la API del catálogo. Intenta de nuevo más tarde.</p>
+        </div>
+      `;
+    }
+  }
+
+  function createCatalogCard(plant) {
+    const card = document.createElement('div');
+    card.className = 'plant-card-ref catalog-card-item';
+    card.dataset.id = plant.id;
+
+    const imgUrl = plant.default_image?.thumbnail || plant.default_image?.small_url || plant.default_image?.regular_url || 'https://images.unsplash.com/photo-1596547609652-9cf5d8d76921?auto=format&fit=crop&q=80&w=600';
+    const wateringText = translateWatering(plant.watering);
+    const sunlightText = translateSunlight(plant.sunlight);
+    const toxicityClass = plant.poisonous ? 'toxicity-poisonous' : 'toxicity-safe';
+
+    // Descripción generada si no existe en la lista
+    const description = `Especie clasificada como ${plant.common_name || 'planta exótica'}. Excelente opción para amantes de la naturaleza. ${sunlightText}.`;
+
+    card.innerHTML = `
+      <div class="plant-card-ref-media">
+        <img src="${imgUrl}" alt="${plant.common_name || 'Especie'}">
+        ${plant.poisonous ? `
+        <span class="media-badge-left toxicity-poisonous" style="position: absolute; top: 12px; left: 12px; padding: 4px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; color: white; background-color: var(--critical); display: inline-flex; align-items: center; gap: 4px; z-index: 2;">
+          <span class="material-symbols-rounded" style="font-size: 12px;">warning</span>
+          <span>Tóxica</span>
+        </span>` : ''}
+      </div>
+      <div class="plant-card-ref-body" style="display: flex; flex-direction: column; gap: 10px; padding: 16px;">
+        <div class="plant-ref-name-group">
+          <span class="plant-ref-nickname" style="font-size: 16px; font-weight: 700; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${plant.common_name || 'Especie'}</span>
+          <span class="plant-ref-species" style="font-size: 12px; font-style: italic; color: var(--text-muted); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${(plant.scientific_name && plant.scientific_name[0]) || 'Unknown species'}</span>
+        </div>
+
+        <div class="plant-ref-indicators" style="display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 8px 0; margin: 4px 0;">
+          <div class="plant-indicator-row" style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--text-muted);">
+            <span class="material-symbols-rounded" style="font-size: 14px; color: var(--primary);">water_drop</span>
+            <span>${wateringText}</span>
+          </div>
+          <div class="plant-indicator-row" style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--text-muted);">
+            <span class="material-symbols-rounded" style="font-size: 14px; color: #ff9800;">light_mode</span>
+            <span>${sunlightText}</span>
+          </div>
+        </div>
+
+        <p class="catalog-desc-clamp" style="font-size: 12px; color: var(--text-muted); line-height: 1.5; height: 36px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; margin-bottom: 8px;">
+          ${description}
+        </p>
+
+        <div class="plant-card-actions-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: auto; width: 100%;">
+          <button class="btn btn-secondary btn-catalog-details" data-id="${plant.id}" style="padding: 8px 12px; font-size: 11px; border-radius: var(--radius-sm); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; justify-content: center;">
+            <span class="material-symbols-rounded" style="font-size: 14px;">visibility</span>
+            <span>Detalles</span>
+          </button>
+          <button class="btn btn-primary btn-catalog-cuidar" data-id="${plant.id}" style="padding: 8px 12px; font-size: 11px; border-radius: var(--radius-sm); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; justify-content: center;">
+            <span class="material-symbols-rounded" style="font-size: 14px;">yard</span>
+            <span>Cuidar</span>
+          </button>
+        </div>
+      </div>
+    `;
+
+    // Click on card body (not buttons) opens details
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('button') || e.target.closest('a')) return;
+      openCatalogPlantDetail(plant.id);
+    });
+
+    return card;
+  }
+
+  async function openCatalogPlantDetail(id) {
+    const modal = document.getElementById('catalog-detail-modal');
+    if (!modal) return;
+
+    try {
+      const res = await fetch(`/api/catalogo/external/${id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Error al obtener detalles de la especie');
+      const details = await res.json();
+
+      const nameEl = document.getElementById('catalog-detail-name');
+      const scientificEl = document.getElementById('catalog-detail-scientific');
+      const imgEl = document.getElementById('catalog-detail-image');
+      const benchmarkEl = document.getElementById('catalog-detail-watering-benchmark');
+      const descEl = document.getElementById('catalog-detail-description');
+      const badgesContainer = document.getElementById('catalog-detail-badges');
+      const btnCuidar = document.getElementById('catalog-detail-btn-cuidar');
+
+      if (nameEl) nameEl.textContent = details.common_name || 'Especie del Catálogo';
+      if (scientificEl) scientificEl.textContent = Array.isArray(details.scientific_name) ? details.scientific_name.join(', ') : (details.scientific_name || '');
+      if (imgEl) imgEl.src = details.default_image?.original_url || details.default_image?.regular_url || details.default_image?.thumbnail || 'https://images.unsplash.com/photo-1596547609652-9cf5d8d76921?auto=format&fit=crop&q=80&w=600';
+
+      // General watering benchmark
+      if (benchmarkEl) {
+        let benchmarkText = 'Riego recomendado: ';
+        if (details.watering_general_benchmark) {
+          const val = details.watering_general_benchmark.value || details.watering_general_benchmark;
+          const unit = details.watering_general_benchmark.unit || 'días';
+          benchmarkText += `Frecuencia aproximada de ${val} ${unit}`;
+        } else if (details.watering) {
+          benchmarkText += translateWatering(details.watering);
+        } else {
+          benchmarkText += 'Moderado';
+        }
+        benchmarkEl.innerHTML = `<span class="material-symbols-rounded" style="color: var(--primary);">water_drop</span> ${benchmarkText}`;
+      }
+
+      // Badges
+      if (badgesContainer) {
+        badgesContainer.innerHTML = '';
+
+        // Indoor
+        const indoorBadge = document.createElement('span');
+        indoorBadge.style = 'padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; background-color: var(--bg-main); border: 1px solid var(--border); color: var(--primary-dark); display: inline-flex; align-items: center; gap: 4px;';
+        const isIndoor = details.indoor === true || details.indoor === 1;
+        indoorBadge.innerHTML = `<span class="material-symbols-rounded" style="font-size: 14px;">${isIndoor ? 'home' : 'nature'}</span> <span>${isIndoor ? 'Interior' : 'Exterior'}</span>`;
+        badgesContainer.appendChild(indoorBadge);
+
+        // Sunlight
+        if (details.sunlight) {
+          const sunBadge = document.createElement('span');
+          sunBadge.style = 'padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; background-color: var(--bg-main); border: 1px solid var(--border); color: #e65100; display: inline-flex; align-items: center; gap: 4px;';
+          sunBadge.innerHTML = `<span class="material-symbols-rounded" style="font-size: 14px;">light_mode</span> <span>${translateSunlight(details.sunlight)}</span>`;
+          badgesContainer.appendChild(sunBadge);
+        }
+
+        // Poisonous (solo se muestra si es tóxica)
+        const isPoisonous = details.poisonous === true || details.poisonous === 1;
+        if (isPoisonous) {
+          const poisonBadge = document.createElement('span');
+          poisonBadge.style = `padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; color: white; display: inline-flex; align-items: center; gap: 4px; background-color: var(--critical);`;
+          poisonBadge.innerHTML = `<span class="material-symbols-rounded" style="font-size: 14px;">warning</span> <span>Tóxica para mascotas</span>`;
+          badgesContainer.appendChild(poisonBadge);
+        }
+      }
+
+      // Description
+      if (descEl) {
+        descEl.textContent = details.description || 'Sin descripción detallada disponible en el catálogo externo para esta especie. Puedes registrarla en tu jardín e iniciar su cuidado botánico personalizado.';
+      }
+
+      // Button Cuida
+      if (btnCuidar) {
+        btnCuidar.onclick = () => {
+          modal.classList.remove('show');
+          selectCatalogPlantForCreation(details);
+        };
+      }
+
+      modal.classList.add('show');
+    } catch (err) {
+      console.error('Error al cargar detalles de la planta:', err.message);
+      showToast('Error', 'No se pudo obtener la información de detalles.', 'warning');
+    }
+  }
+
+  function selectCatalogPlantForCreation(item) {
+    let freq = 7;
+    if (item.frecuencia_riego_dias) {
+      freq = item.frecuencia_riego_dias;
+    } else if (item.watering_general_benchmark) {
+      freq = parseInt(item.watering_general_benchmark.value || item.watering_general_benchmark, 10) || 7;
+    } else if (item.watering) {
+      const w = item.watering.toLowerCase();
+      if (w.includes('frequent')) freq = 3;
+      else if (w.includes('average')) freq = 7;
+      else if (w.includes('minimum')) freq = 14;
+    }
+
+    selectedCatalogItem = {
+      id_catalogo: item.id || item.id_catalogo,
+      nombre_comun: item.common_name || item.nombre_comun,
+      nombre_cientifico: Array.isArray(item.scientific_name) ? item.scientific_name[0] : (item.nombre_cientifico || 'Unknown species'),
+      descripcion: item.description || item.descripcion || '',
+      imagen_url: item.default_image?.thumbnail || item.default_image?.small_url || item.default_image?.regular_url || item.imagen_url || 'https://images.unsplash.com/photo-1596547609652-9cf5d8d76921?auto=format&fit=crop&q=80&w=600',
+      frecuencia_riego_dias: freq
+    };
+
+    const catalogSearch = document.getElementById('catalog-search');
+    const selectedCatalogId = document.getElementById('selected-catalog-id');
+    const previewDiv = document.getElementById('catalog-plant-preview');
+    const previewImg = document.getElementById('preview-catalog-img');
+    const previewName = document.getElementById('preview-catalog-name');
+    const previewDesc = document.getElementById('preview-catalog-desc');
+
+    if (catalogSearch && selectedCatalogId) {
+      catalogSearch.value = `${selectedCatalogItem.nombre_comun} (${selectedCatalogItem.nombre_cientifico})`;
+      selectedCatalogId.value = selectedCatalogItem.id_catalogo;
+    }
+
+    if (previewDiv && previewImg && previewName && previewDesc) {
+      previewImg.src = selectedCatalogItem.imagen_url;
+      previewName.textContent = `${selectedCatalogItem.nombre_comun} (${selectedCatalogItem.nombre_cientifico})`;
+      previewDesc.textContent = selectedCatalogItem.descripcion || 'Especie seleccionada desde el catálogo oficial.';
+      previewDiv.classList.remove('hidden');
+    }
+
+    // Open add-plant-modal
+    const addPlantModal = document.getElementById('add-plant-modal');
+    if (addPlantModal) {
+      addPlantModal.classList.add('show');
+      setupDates();
+
+      const plantWateringFreq = document.getElementById('plant-watering-frequency');
+      if (plantWateringFreq) {
+        plantWateringFreq.value = freq;
+      }
+
+      // Focus custom name input
+      const plantNickname = document.getElementById('plant-nickname');
+      if (plantNickname) plantNickname.focus();
+    }
+  }
+
+  // --- REGISTRAR BINDINGS DE EVENTOS DEL CATÁLOGO ---
+  function setupCatalogEventListeners() {
+    const btnSearch = document.getElementById('btn-catalog-search');
+    const btnReset = document.getElementById('btn-catalog-reset');
+    const inputQ = document.getElementById('catalog-search-q');
+    const selectIndoor = document.getElementById('catalog-filter-indoor');
+    const selectSunlight = document.getElementById('catalog-filter-sunlight');
+    const selectPoisonous = document.getElementById('catalog-filter-poisonous');
+    const btnPrev = document.getElementById('btn-catalog-prev');
+    const btnNext = document.getElementById('btn-catalog-next');
+    const modal = document.getElementById('catalog-detail-modal');
+
+    // Event delegation on grid for card action buttons
+    const grid = document.getElementById('catalog-grid');
+    if (grid) {
+      grid.addEventListener('click', async (e) => {
+        const target = e.target;
+
+        // Detalle Button
+        const btnDet = target.closest('.btn-catalog-details');
+        if (btnDet) {
+          e.preventDefault();
+          const id = parseInt(btnDet.dataset.id, 10);
+          await openCatalogPlantDetail(id);
+          return;
+        }
+
+        // Cuidar Button
+        const btnCuidar = target.closest('.btn-catalog-cuidar');
+        if (btnCuidar) {
+          e.preventDefault();
+          const id = parseInt(btnCuidar.dataset.id, 10);
+
+          // Fetch simple details from API to populate correctly
+          try {
+            const res = await fetch(`/api/catalogo/external/${id}`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+              const details = await res.json();
+              selectCatalogPlantForCreation(details);
+            } else {
+              showToast('Error', 'No se pudo precargar la información de la planta.', 'warning');
+            }
+          } catch (err) {
+            console.error('Error preloading details:', err.message);
+          }
+          return;
+        }
+      });
+    }
+
+    if (btnSearch) {
+      btnSearch.addEventListener('click', () => {
+        catalogPage = 1;
+        catalogSearchQuery = inputQ ? inputQ.value.trim() : '';
+        catalogFilterIndoor = selectIndoor ? selectIndoor.value : '';
+        catalogFilterSunlight = selectSunlight ? selectSunlight.value : '';
+        catalogFilterPoisonous = selectPoisonous ? selectPoisonous.value : '';
+        renderCatalogSection();
+      });
+    }
+
+    if (inputQ) {
+      inputQ.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          if (btnSearch) btnSearch.click();
+        }
+      });
+    }
+
+    if (btnReset) {
+      btnReset.addEventListener('click', () => {
+        catalogPage = 1;
+        catalogSearchQuery = '';
+        catalogFilterIndoor = '';
+        catalogFilterSunlight = '';
+        catalogFilterPoisonous = '';
+
+        if (inputQ) inputQ.value = '';
+        if (selectIndoor) selectIndoor.value = '';
+        if (selectSunlight) selectSunlight.value = '';
+        if (selectPoisonous) selectPoisonous.value = '';
+
+        renderCatalogSection();
+      });
+    }
+
+    if (btnPrev) {
+      btnPrev.addEventListener('click', () => {
+        if (catalogPage > 1) {
+          catalogPage--;
+          renderCatalogSection();
+        }
+      });
+    }
+
+    if (btnNext) {
+      btnNext.addEventListener('click', () => {
+        if (catalogPage < catalogMaxPage) {
+          catalogPage++;
+          renderCatalogSection();
+        }
+      });
+    }
+
+    // Modal close hooks
+    const closeBtn = document.getElementById('catalog-detail-close');
+    const closeBtnFooter = document.getElementById('catalog-detail-close-btn');
+    if (closeBtn && modal) closeBtn.addEventListener('click', () => modal.classList.remove('show'));
+    if (closeBtnFooter && modal) closeBtnFooter.addEventListener('click', () => modal.classList.remove('show'));
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.remove('show');
+      });
+    }
+  }
+
+  // --- BOOTSTRAPPING ADDITIONAL COMPONENT ON INIT ---
+  const originalInit = init;
+  init = function () {
+    setupCatalogEventListeners();
+    originalInit();
+  };
 
   init();
 });

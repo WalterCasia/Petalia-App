@@ -14,7 +14,7 @@ async function checkWateringAlerts() {
       pu.nombre_personalizado,
       pu.fecha_ultimo_riego,
       cp.nombre_comun,
-      cp.frecuencia_riego_dias
+      COALESCE(pu.frecuencia_riego_dias, cp.frecuencia_riego_dias) AS frecuencia_riego_dias
     FROM plantas_usuario pu
     INNER JOIN catalogo_plantas cp
       ON pu.id_catalogo = cp.id_catalogo

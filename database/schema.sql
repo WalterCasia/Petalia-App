@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     nombre VARCHAR(100) NOT NULL,
     email VARCHAR(150) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
+    rol VARCHAR(50) NOT NULL DEFAULT 'usuario',
     fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -21,6 +22,7 @@ CREATE TABLE IF NOT EXISTS catalogo_plantas (
     nombre_cientifico VARCHAR(150) NOT NULL UNIQUE,
     nombre_comun VARCHAR(150),
     descripcion TEXT,
+    cuidados_basicos TEXT,
     frecuencia_riego_dias INT,
     luz_recomendada VARCHAR(100),
     temperatura_min DECIMAL(5,2),
@@ -42,6 +44,8 @@ CREATE TABLE IF NOT EXISTS plantas_usuario (
     favorita BOOLEAN DEFAULT FALSE,
     estado ENUM('Activa', 'Muerta', 'Regalada') DEFAULT 'Activa',
     imagen_url VARCHAR(500),
+    descripcion_personal TEXT,
+    frecuencia_riego_dias INT DEFAULT NULL,
     fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
     FOREIGN KEY (id_catalogo) REFERENCES catalogo_plantas(id_catalogo) ON DELETE CASCADE
@@ -96,6 +100,40 @@ CREATE TABLE IF NOT EXISTS notificaciones (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ==========================================
+-- TABLA fotos_plantas
+-- ==========================================
+CREATE TABLE IF NOT EXISTS fotos_plantas (
+    id_foto INT AUTO_INCREMENT PRIMARY KEY,
+    id_planta_usuario INT NOT NULL,
+    imagen_url VARCHAR(500) NOT NULL,
+    fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_planta_usuario) REFERENCES plantas_usuario(id_planta_usuario) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ==========================================
+-- TABLA notas_planta
+-- ==========================================
+CREATE TABLE IF NOT EXISTS notas_planta (
+    id_nota INT AUTO_INCREMENT PRIMARY KEY,
+    id_planta_usuario INT NOT NULL,
+    nota TEXT NOT NULL,
+    fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_planta_usuario) REFERENCES plantas_usuario(id_planta_usuario) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ==========================================
+-- TABLA identificaciones
+-- ==========================================
+CREATE TABLE IF NOT EXISTS identificaciones (
+    id_identificacion INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    nombre_sugerido VARCHAR(150),
+    imagen_url VARCHAR(500),
+    fecha_identificacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ==========================================
 -- DATOS SEMILLA (CATÁLOGO GENERAL)
 -- ==========================================
 INSERT IGNORE INTO catalogo_plantas (id_catalogo, nombre_cientifico, nombre_comun, descripcion, frecuencia_riego_dias, luz_recomendada, temperatura_min, temperatura_max, imagen_url)
@@ -105,3 +143,15 @@ VALUES
 (3, 'Epipremnum Aureum', 'Pothos', 'Planta colgante muy popular', 5, 'Luz indirecta', 18, 30, 'https://images.unsplash.com/photo-1596547609652-9cf5d8d76921?auto=format&fit=crop&q=80&w=600'),
 (4, 'Ficus Lyrata', 'Ficus Lira', 'Planta ornamental de hojas grandes', 7, 'Luz brillante', 18, 28, 'https://images.unsplash.com/photo-1545241047-6083a3684587?auto=format&fit=crop&q=80&w=600'),
 (5, 'Aloe Vera', 'Aloe Vera', 'Planta medicinal y decorativa', 14, 'Sol directo', 10, 35, 'https://images.unsplash.com/photo-1596547609652-9cf5d8d76921?auto=format&fit=crop&q=80&w=600');
+
+-- ==========================================
+-- TABLA api_logs
+-- ==========================================
+CREATE TABLE IF NOT EXISTS api_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    endpoint_consultado VARCHAR(500) NOT NULL,
+    codigo_estado INT NOT NULL,
+    tiempo_respuesta_ms INT NOT NULL,
+    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+

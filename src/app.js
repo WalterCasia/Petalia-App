@@ -9,6 +9,7 @@ const userPlantRoutes = require('./routes/userPlantRoutes');
 const favoriteRoutes = require('./routes/favoriteRoutes');
 const careRoutes = require('./routes/careRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 const errorMiddleware = require('./middlewares/errorMiddleware');
 
 const app = express();
@@ -30,6 +31,7 @@ app.use('/api/catalogo', plantRoutes);
 app.use('/api/plantas', userPlantRoutes);
 app.use('/api/favoritos', favoriteRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api', careRoutes); // Mounts /historial, /plantas/:id/regar, /plantas/:id/abonar, etc.
 
 // 404 handler for unmatched API routes

@@ -86,7 +86,41 @@ const getExternalPlantDetails = async (req, res, next) => {
   try {
     const { id } = req.params;
     const details = await ExternalApiService.getPlantDetails(id);
+
+    // Guardar automáticamente en el catálogo local para asegurar la integridad de la base de datos
+    if (details) {
+      try {
+        const mapped = ExternalApiService.mapListPlant(details);
+        await Plant.create(mapped);
+      } catch (dbErr) {
+        console.error(`[plantController] Failed to auto-save plant details ${id} to DB:`, dbErr.message);
+      }
+    }
+
     res.json(details);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getExternalSpeciesList = async (req, res, next) => {
+  try {
+    const { page, q, indoor, sunlight, poisonous } = req.query;
+    const response = await ExternalApiService.speciesList({ page, q, indoor, sunlight, poisonous });
+
+    // Guardar automáticamente las especies devueltas en la base de datos local
+    if (response && response.data && Array.isArray(response.data)) {
+      for (const plantData of response.data) {
+        try {
+          const mapped = ExternalApiService.mapListPlant(plantData);
+          await Plant.create(mapped);
+        } catch (dbErr) {
+          console.error(`[plantController] Failed to auto-save listed plant ${plantData.id} to DB:`, dbErr.message);
+        }
+      }
+    }
+
+    res.json(response);
   } catch (error) {
     next(error);
   }
@@ -96,5 +130,6 @@ module.exports = {
   getAllPlants,
   getPlantById,
   searchExternalPlants,
-  getExternalPlantDetails
+  getExternalPlantDetails,
+  getExternalSpeciesList
 };

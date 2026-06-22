@@ -8,7 +8,7 @@ const Plant = require('../models/Plant');
 exports.addUserPlant = async (req, res, next) => {
     try {
         const userId = req.user.id_usuario || req.user.id;
-        const { id_catalogo, nombre_personalizado, fecha_adquisicion, fecha_ultimo_riego, favorita, estado } = req.body;
+        const { id_catalogo, nombre_personalizado, fecha_adquisicion, fecha_ultimo_riego, favorita, estado, descripcion_personal, frecuencia_riego_dias } = req.body;
 
         if (!id_catalogo) {
             return res.status(400).json({ message: 'El id_catalogo es obligatorio' });
@@ -36,7 +36,9 @@ exports.addUserPlant = async (req, res, next) => {
             fecha_ultimo_riego,
             favorita: favorita !== undefined ? (favorita === 'true' || favorita === true || favorita === 1) : false,
             estado: estado || 'Activa',
-            imagen_url
+            imagen_url,
+            descripcion_personal,
+            frecuencia_riego_dias: frecuencia_riego_dias !== undefined && frecuencia_riego_dias !== '' ? parseInt(frecuencia_riego_dias, 10) : null
         });
 
         return res.status(201).json({

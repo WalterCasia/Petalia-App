@@ -20,8 +20,10 @@
   <!-- Sección de Notificaciones Flotantes -->
   <div id="notification-container" class="notification-container"></div>
 
+
+
   <!-- Contenedor de Autenticación Centralizado (Estilo Minimalista) -->
-  <div id="auth-container" class="auth-container">
+  <div id="auth-container" class="auth-container hidden">
     <!-- Carta de Login / Registro -->
     <div class="auth-card">
       <div class="auth-header">
@@ -58,6 +60,7 @@
           <span class="material-symbols-rounded">arrow_forward</span>
         </button>
         <p class="auth-switch">¿No tienes cuenta? <a href="#" id="to-register">Regístrate aquí</a></p>
+        <p class="auth-back" style="text-align: center; margin-top: 15px;"><a href="landing.html" style="color: var(--primary); text-decoration: none; font-size: 13px; display: inline-flex; align-items: center; gap: 4px; justify-content: center;"><span class="material-symbols-rounded" style="font-size: 16px;">arrow_back</span> Volver a Inicio</a></p>
       </form>
 
       <!-- Formulario Registro -->
@@ -90,6 +93,7 @@
           <span class="material-symbols-rounded">person_add</span>
         </button>
         <p class="auth-switch">¿Ya tienes cuenta? <a href="#" id="to-login">Inicia sesión aquí</a></p>
+        <p class="auth-back" style="text-align: center; margin-top: 15px;"><a href="landing.html" style="color: var(--primary); text-decoration: none; font-size: 13px; display: inline-flex; align-items: center; gap: 4px; justify-content: center;"><span class="material-symbols-rounded" style="font-size: 16px;">arrow_back</span> Volver a Inicio</a></p>
       </form>
     </div>
   </div>
@@ -120,6 +124,10 @@
             <span class="material-symbols-rounded">forest</span>
             <span>Mis Plantas</span>
           </a>
+          <a href="#" class="nav-item" data-section="catalogo">
+            <span class="material-symbols-rounded">menu_book</span>
+            <span>Catálogo</span>
+          </a>
           <a href="#" class="nav-item" data-section="riego">
             <span class="material-symbols-rounded">water_drop</span>
             <span>Riego</span>
@@ -139,6 +147,10 @@
           <a href="#" class="nav-item" data-section="historial">
             <span class="material-symbols-rounded">history</span>
             <span>Historial</span>
+          </a>
+          <a href="admin.html" class="nav-item hidden" id="nav-admin">
+            <span class="material-symbols-rounded">admin_panel_settings</span>
+            <span>Administracion</span>
           </a>
           <a href="#" class="nav-item" data-section="ajustes">
             <span class="material-symbols-rounded">settings</span>
@@ -162,7 +174,7 @@
             <span class="material-symbols-rounded">menu</span>
           </button>
           <div class="welcome-msg">
-            <h1>¡Hola, <span id="user-display-name">Usuario</span>! <span class="wave-leaf">🌿</span></h1>
+            <h1>¡Hola, <span id="user-display-name">Usuario</span>!</h1>
             <p class="welcome-box-subtitle">Cuida tus plantas, ellas cuidan de ti.</p>
           </div>
 
@@ -195,7 +207,6 @@
               <div class="user-avatar" id="user-avatar-initial">U</div>
               <div class="user-meta">
                 <span class="profile-name" id="profile-name">Usuario</span>
-                <span class="profile-level">Nivel Jardinero 🍃</span>
               </div>
               <button id="logout-btn" class="btn-logout-icon" title="Cerrar Sesión">
                 <span class="material-symbols-rounded">logout</span>
@@ -245,11 +256,21 @@
                   <div class="widget-header">
                     <h2>Notificaciones y Alertas</h2>
                   </div>
-                  <p class="widget-subtitle">Mantén tus plantas siempre felices 💚</p>
+                  <p class="widget-subtitle">Manten tus plantas siempre felices.</p>
                   <div class="alerts-list" id="alerts-list"></div>
                 </section>
 
-                <!-- Widget Consejo del Día eliminado (duplicado) -->
+                <!-- Widget Consejo del Día -->
+                <section class="widget-card consejo-widget">
+                  <div class="consejo-decorations">
+                    <span class="material-symbols-rounded decor-leaf decor-1">yard</span>
+                    <span class="material-symbols-rounded decor-leaf decor-2">eco</span>
+                  </div>
+                  <div class="widget-header">
+                    <h2>Consejo del Día</h2>
+                  </div>
+                  <ul id="curiosidades-list" class="curiosidades-list"></ul>
+                </section>
               </div>
 
             </div><!-- /inicio-grid-3col -->
@@ -272,6 +293,80 @@
             </section>
           </div>
 
+          <!-- SECCIÓN: CATÁLOGO (Búsqueda y Exploración de Especies de la API) -->
+          <div id="section-catalogo" class="dashboard-section-view hidden">
+            <section class="widget-card full-width-widget">
+              <div class="widget-header catalog-header-container" style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                  <div>
+                    <h2 style="font-size: 22px; font-weight: 700; color: var(--primary-dark); display: flex; align-items: center; gap: 8px;">
+                      <span class="material-symbols-rounded" style="font-size: 26px; color: var(--primary);">menu_book</span> Catálogo de Especies
+                    </h2>
+                    <p style="color: var(--text-muted); font-size: 13px; margin-top: 4px;">Busca y filtra entre miles de plantas de la base de datos oficial de Perenual.</p>
+                  </div>
+                </div>
+                
+                <!-- Buscador de texto y filtros -->
+                <div class="catalog-controls-grid" style="display: grid; grid-template-columns: 2fr 1fr 1.2fr 1.2fr auto auto; gap: 12px; align-items: center; width: 100%;">
+                  <div class="input-group" style="position: relative;">
+                    <span class="material-symbols-rounded" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 18px;">search</span>
+                    <input type="text" id="catalog-search-q" placeholder="Buscar especie (ej: Monstera, Aloe)..." style="width: 100%; padding: 12px 14px 12px 42px; border-radius: var(--radius-md); border: 1px solid var(--border); background-color: var(--bg-card); outline: none; font-family: inherit; font-size: 13px; color: var(--text-main);" />
+                  </div>
+                  
+                  <select id="catalog-filter-indoor" style="padding: 12px 14px; border-radius: var(--radius-md); border: 1px solid var(--border); font-family: inherit; font-size: 13px; color: var(--text-main); background-color: var(--bg-card); outline: none; cursor: pointer;">
+                    <option value="">Tipo (Todos)</option>
+                    <option value="1">Interior</option>
+                    <option value="0">Exterior</option>
+                  </select>
+                  
+                  <select id="catalog-filter-sunlight" style="padding: 12px 14px; border-radius: var(--radius-md); border: 1px solid var(--border); font-family: inherit; font-size: 13px; color: var(--text-main); background-color: var(--bg-card); outline: none; cursor: pointer;">
+                    <option value="">Luz (Cualquiera)</option>
+                    <option value="full_shade">Sombra completa</option>
+                    <option value="part_shade">Sombra parcial</option>
+                    <option value="sun-part_shade">Sol parcial</option>
+                    <option value="full_sun">Sol directo</option>
+                  </select>
+                  
+                  <select id="catalog-filter-poisonous" style="padding: 12px 14px; border-radius: var(--radius-md); border: 1px solid var(--border); font-family: inherit; font-size: 13px; color: var(--text-main); background-color: var(--bg-card); outline: none; cursor: pointer;">
+                    <option value="">Mascotas (Cualquiera)</option>
+                    <option value="0">Segura (No tóxica)</option>
+                    <option value="1">Tóxica</option>
+                  </select>
+
+                  <button id="btn-catalog-search" class="btn btn-primary" style="padding: 12px 24px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; justify-content: center; height: 100%;">
+                    <span class="material-symbols-rounded" style="font-size: 18px;">search</span> Buscar
+                  </button>
+
+                  <button id="btn-catalog-reset" class="btn btn-secondary" style="padding: 12px; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; height: 100%; width: 44px; border-radius: var(--radius-md);" title="Limpiar Filtros">
+                    <span class="material-symbols-rounded" style="font-size: 18px;">restart_alt</span>
+                  </button>
+                </div>
+              </div>
+              
+              <!-- Loader de Carga -->
+              <div id="catalog-loader" class="hidden" style="text-align: center; padding: 48px 0;">
+                <div class="spinner" style="border: 4px solid var(--border); border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 16px auto;"></div>
+                <p style="font-size: 14px; color: var(--text-muted);">Consultando catálogo oficial...</p>
+              </div>
+
+              <!-- Grid de tarjetas de plantas del catálogo -->
+              <div class="plants-grid-layout" id="catalog-grid" style="margin-top: 8px;">
+                <!-- Renderizado dinámico de tarjetas -->
+              </div>
+              
+              <!-- Paginación -->
+              <div id="catalog-pagination" style="display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 36px; padding-top: 20px; border-top: 1px solid var(--border);">
+                <button id="btn-catalog-prev" class="btn btn-secondary" style="padding: 10px 20px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;" disabled>
+                  <span class="material-symbols-rounded" style="font-size: 18px;">chevron_left</span> Anterior
+                </button>
+                <span id="catalog-page-info" style="font-size: 14px; font-weight: 600; color: var(--primary-dark);">Página 1</span>
+                <button id="btn-catalog-next" class="btn btn-secondary" style="padding: 10px 20px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+                  Siguiente <span class="material-symbols-rounded" style="font-size: 18px;">chevron_right</span>
+                </button>
+              </div>
+            </section>
+          </div>
+
           <!-- SECCIÓN: RIEGO (Monitoreo de Riego y Algoritmo) -->
           <div id="section-riego" class="dashboard-section-view hidden">
             <div class="dashboard-row-riego-section">
@@ -290,7 +385,7 @@
             <!-- Riego individual por planta -->
             <section class="widget-card full-width-widget" style="margin-top: 24px;">
               <div class="widget-header">
-                <h2>Línea de Tiempo de Riego por Planta 🌱</h2>
+                <h2>Línea de Tiempo de Riego por Planta</h2>
                 <span class="sprint-tag">Consistencia e Intervalos</span>
               </div>
               <div id="riego-plants-progress-container" class="riego-progress-grid">
@@ -303,7 +398,7 @@
           <div id="section-cuidados" class="dashboard-section-view hidden">
             <section class="widget-card full-width-widget">
               <div class="widget-header">
-                <h2>Plan de Cuidados por Planta 🌱</h2>
+                <h2>Plan de Cuidados por Planta</h2>
                 <span class="sprint-tag">Métricas en Tiempo Real</span>
               </div>
               <div id="cuidados-plant-grid" class="cuidados-grid">
@@ -319,7 +414,7 @@
               <div class="calendar-monthly-left">
                 <section class="widget-card calendar-grid-widget">
                   <div class="widget-header">
-                    <h2>Calendario de Riego 📅</h2>
+                    <h2>Calendario de Riego</h2>
                     <div class="calendar-filter-container">
                       <label for="calendar-plant-filter">Filtre: </label>
                       <select id="calendar-plant-filter" class="calendar-filter-select">
@@ -482,6 +577,8 @@
             </section>
           </div>
 
+          <!-- Sección Admin movida a admin.html -->
+
         </main>
       </div>
 
@@ -499,15 +596,15 @@
       </div>
       <form id="add-plant-form" class="modal-form">
         <!-- Búsqueda en Catálogo -->
-        <div class="form-group relative">
+        <div class="form-group">
           <label for="catalog-search">Buscar en Catálogo Oficial *</label>
-          <div class="input-group">
+          <div class="input-group" style="position: relative;">
             <span class="material-symbols-rounded input-icon font-light">search</span>
             <input type="text" id="catalog-search" placeholder="Escribe 'Monstera', 'Aloe', etc..." required
               autocomplete="off">
+            <!-- Sugerencias del catálogo -->
+            <div id="catalog-suggestions" class="catalog-suggestions hidden"></div>
           </div>
-          <!-- Sugerencias del catálogo -->
-          <div id="catalog-suggestions" class="catalog-suggestions hidden"></div>
           <input type="hidden" id="selected-catalog-id">
           
           <!-- Vista previa de planta seleccionada -->
@@ -524,7 +621,13 @@
           <!-- Nombre Personalizado -->
           <div class="form-group">
             <label for="plant-nickname">Nombre Personalizado *</label>
-            <input type="text" id="plant-nickname" placeholder="Ej: Beto, Espinas..." required>
+            <input type="text" id="plant-nickname" placeholder="Ej: Beto..." required>
+          </div>
+
+          <!-- Frecuencia de Riego -->
+          <div class="form-group">
+            <label for="plant-watering-frequency">Frecuencia de Riego (días) *</label>
+            <input type="number" id="plant-watering-frequency" min="1" placeholder="Ej: 7" required>
           </div>
 
           <!-- Fecha de Adquisición -->
@@ -538,6 +641,12 @@
             <label for="plant-last-watered">Último Riego *</label>
             <input type="date" id="plant-last-watered" required>
           </div>
+        </div>
+
+        <!-- Descripción Personal -->
+        <div class="form-group">
+          <label for="plant-description">Descripción Personal</label>
+          <textarea id="plant-description" placeholder="Ej: Me la regaló mi hermano, regar solo por las mañanas..." rows="3"></textarea>
         </div>
 
         <!-- Captura de Foto Híbrida (Cámara / Galería) -->
@@ -592,35 +701,7 @@
     </div>
   </div>
 
-  <!-- Botón Flotante: Asistente Botánico -->
-  <div id="floating-bot-btn" class="floating-bot-btn" title="Asistente Botánico">
-    <span class="material-symbols-rounded">chat</span>
-  </div>
 
-  <!-- Panel Chat Flotante -->
-  <div id="floating-chat-panel" class="floating-chat-panel hidden">
-    <div class="chat-panel-header">
-      <div class="chat-panel-title">
-        <span class="material-symbols-rounded">smart_toy</span>
-        <span>Asistente Botánico</span>
-      </div>
-      <button id="close-chat-panel" class="btn-close-chat">
-        <span class="material-symbols-rounded">close</span>
-      </button>
-    </div>
-    <div id="chat-messages" class="chat-messages">
-      <div class="chat-msg bot">
-        <span class="material-symbols-rounded chat-msg-icon">eco</span>
-        <p>¡Hola! Soy tu asistente botánico 🌿 ¿En qué puedo ayudarte hoy?</p>
-      </div>
-    </div>
-    <div class="chat-input-row">
-      <input type="text" id="chat-input" placeholder="Pregunta sobre tus plantas...">
-      <button id="chat-send-btn" class="btn-chat-send">
-        <span class="material-symbols-rounded">send</span>
-      </button>
-    </div>
-  </div>
 
   <script src="main.js"></script>
 
@@ -663,29 +744,107 @@
   <div id="plant-detail-modal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h2 id="detail-name">Detalle de Planta</h2>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <h2 id="detail-name">Detalle de Planta</h2>
+          <button id="detail-edit-btn" class="btn-icon" title="Editar planta" style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px;">
+            <span class="material-symbols-rounded" style="font-size: 18px;">edit</span>
+          </button>
+        </div>
         <button id="detail-close" class="btn-close-modal"><span class="material-symbols-rounded">close</span></button>
       </div>
       <div class="modal-body" id="detail-body">
         <div class="detail-image"><img id="detail-image" src="#" alt="Imagen planta"
             style="width:100%;border-radius:8px;object-fit:cover;max-height:220px;" /></div>
         <div class="detail-info" style="margin-top:12px;">
-          <p id="detail-species"></p>
-          <p id="detail-acquired"></p>
-          <p id="detail-last-watered"></p>
-          <p id="detail-frequency"></p>
-          <p id="detail-next-watering"></p>
-          <hr style="margin: 12px 0; border: 0; border-top: 1px solid var(--border);" />
-          <p id="detail-description" style="font-size: 13px; line-height: 1.5; color: var(--text-main);"></p>
-          <p id="detail-care-guides" style="font-size: 13px; line-height: 1.5; color: var(--text-main); margin-top: 8px;"></p>
-          <div id="detail-annex-container" class="hidden" style="margin-top: 12px;">
-            <span style="font-size: 12px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px;">Foto Personalizada (Anexo):</span>
-            <img id="detail-annex-image" src="#" style="width: 100px; height: 100px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border);" />
+          
+          <!-- Vista de detalles -->
+          <div id="detail-view-container">
+            <p id="detail-species"></p>
+            <p id="detail-acquired"></p>
+            <p id="detail-last-watered"></p>
+            <p id="detail-frequency"></p>
+            <p id="detail-next-watering"></p>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 16px 0;" id="detail-badges"></div>
+            <div id="detail-personal-desc-container" class="hidden" style="margin-bottom: 16px; padding: 12px; background-color: var(--bg-main); border-left: 3px solid var(--primary); border-radius: var(--radius-sm);">
+              <strong style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary-dark); display: block; margin-bottom: 4px;">Descripción Personal</strong>
+              <p id="detail-personal-description" style="font-size: 13px; margin: 0; line-height: 1.4; color: var(--text-main); font-style: italic;"></p>
+            </div>
+            <hr style="margin: 12px 0; border: 0; border-top: 1px solid var(--border);" />
+            <p id="detail-description" style="font-size: 13px; line-height: 1.5; color: var(--text-main);"></p>
+            <p id="detail-care-guides" style="font-size: 13px; line-height: 1.5; color: var(--text-main); margin-top: 8px;"></p>
+            <div id="detail-annex-container" class="hidden" style="margin-top: 12px;">
+              <span style="font-size: 12px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px;">Foto Personalizada (Anexo):</span>
+              <img id="detail-annex-image" src="#" style="width: 100px; height: 100px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border);" />
+            </div>
           </div>
+
+          <!-- Formulario de edición -->
+          <div id="detail-edit-form-container" class="hidden" style="margin-top: 12px;">
+            <form id="detail-edit-form" class="modal-form">
+              <div class="form-group">
+                <label for="detail-edit-nickname">Nombre Personalizado *</label>
+                <input type="text" id="detail-edit-nickname" required style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); outline: none;">
+              </div>
+              <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px;">
+                <div class="form-group">
+                  <label for="detail-edit-frequency">Frecuencia de Riego (días) *</label>
+                  <input type="number" id="detail-edit-frequency" min="1" required style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); outline: none;">
+                </div>
+                <div class="form-group">
+                  <label for="detail-edit-acquired">Fecha de Adquisición *</label>
+                  <input type="date" id="detail-edit-acquired" required style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); outline: none;">
+                </div>
+              </div>
+              <div class="form-group" style="margin-top: 8px;">
+                <label for="detail-edit-last-watered">Fecha de Último Riego *</label>
+                <input type="date" id="detail-edit-last-watered" required style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); outline: none;">
+              </div>
+              <div class="form-group" style="margin-top: 8px;">
+                <label for="detail-edit-description">Descripción Personal</label>
+                <textarea id="detail-edit-description" rows="2" style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); outline: none; resize: vertical;"></textarea>
+              </div>
+              <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;">
+                <button type="button" id="detail-edit-cancel" class="btn btn-secondary" style="padding: 8px 16px; font-size: 13px; border-radius: var(--radius-sm);">Cancelar</button>
+                <button type="submit" class="btn btn-primary" style="padding: 8px 16px; font-size: 13px; border-radius: var(--radius-sm);">Guardar</button>
+              </div>
+            </form>
+          </div>
+
         </div>
       </div>
       <div class="modal-footer">
         <button type="button" id="detail-close-btn" class="btn btn-secondary">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Detalle de Planta de Catálogo Externo -->
+  <div id="catalog-detail-modal" class="modal">
+    <div class="modal-content" style="max-width: 500px; border-radius: var(--radius-lg);">
+      <div class="modal-header">
+        <h2 id="catalog-detail-name" style="font-size: 18px; font-weight: 700; color: var(--primary-dark);">Detalle de Planta</h2>
+        <button id="catalog-detail-close" class="btn-close-modal"><span class="material-symbols-rounded">close</span></button>
+      </div>
+      <div class="modal-body" id="catalog-detail-body">
+        <div class="detail-image">
+          <img id="catalog-detail-image" src="#" alt="Imagen de planta" style="width:100%; border-radius:var(--radius-md); object-fit:cover; max-height:240px; box-shadow: var(--shadow-sm);" />
+        </div>
+        <div class="detail-info" style="margin-top:16px;">
+          <p id="catalog-detail-scientific" style="font-size: 14px; font-style: italic; color: var(--text-muted); margin-bottom: 12px; font-weight: 500;"></p>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;" id="catalog-detail-badges">
+            <!-- Insignias / Badges -->
+          </div>
+          <div style="background-color: var(--healthy-bg); border: 1px solid var(--healthy-border); border-radius: var(--radius-md); padding: 14px; margin-bottom: 16px;">
+            <p id="catalog-detail-watering-benchmark" style="font-size: 13px; margin: 0; font-weight: 600; color: var(--primary); display: flex; align-items: center; gap: 8px;">
+              <span class="material-symbols-rounded" style="color: var(--primary);">water_drop</span> Riego recomendado: --
+            </p>
+          </div>
+          <p id="catalog-detail-description" style="font-size: 13px; line-height: 1.6; color: var(--text-main); background: #fbfdfb; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; max-height: 150px; overflow-y: auto;"></p>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; gap: 12px; justify-content: flex-end; padding-top: 16px; border-top: 1px solid var(--border); margin-top: 16px;">
+        <button type="button" id="catalog-detail-btn-cuidar" class="btn btn-primary" style="padding: 10px 20px; font-size: 13px; font-weight: 600;">Cuidar esta planta</button>
+        <button type="button" id="catalog-detail-close-btn" class="btn btn-secondary" style="padding: 10px 20px; font-size: 13px;">Cerrar</button>
       </div>
     </div>
   </div>

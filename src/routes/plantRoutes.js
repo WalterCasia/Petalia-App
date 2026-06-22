@@ -6,6 +6,7 @@ const plantController = require('../controllers/plantController');
 router.get('/', plantController.getAllPlants);
 router.get('/search', plantController.searchExternalPlants);
 router.get('/external/:id', plantController.getExternalPlantDetails);
+router.get('/species-list', plantController.getExternalSpeciesList);
 router.get('/:id', plantController.getPlantById);
 
 module.exports = router;

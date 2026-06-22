@@ -13,6 +13,22 @@ const register = async (req, res, next) => {
       return next(error);
     }
 
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      const error = new Error('Invalid email format');
+      error.status = 400;
+      return next(error);
+    }
+
+    // Password strength validation: min 8 chars, 1 uppercase, 1 lowercase, 1 digit, 1 special char
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      const error = new Error('Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character');
+      error.status = 400;
+      return next(error);
+    }
+
     // Check if user already exists
     const existingUser = await User.findByEmail(email);
     if (existingUser) {
@@ -25,16 +41,17 @@ const register = async (req, res, next) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Create the user
+    // Create the user (defaults to role 'usuario')
     const newUser = await User.create({
       nombre,
       email,
-      password: hashedPassword
+      password: hashedPassword,
+      rol: 'usuario'
     });
 
     // Generate JWT
     const token = jwt.sign(
-      { id: newUser.id_usuario || newUser.id, email: newUser.email },
+      { id: newUser.id_usuario || newUser.id, email: newUser.email, rol: newUser.rol },
       process.env.JWT_SECRET || 'supersecretjwtkeyforpetalia',
       { expiresIn: '24h' }
     );
@@ -45,7 +62,8 @@ const register = async (req, res, next) => {
       user: {
         id: newUser.id_usuario,
         nombre: newUser.nombre,
-        email: newUser.email
+        email: newUser.email,
+        rol: newUser.rol
       }
     });
   } catch (error) {
@@ -81,7 +99,7 @@ const login = async (req, res, next) => {
 
     // Generate JWT
     const token = jwt.sign(
-      { id: user.id_usuario || user.id, email: user.email },
+      { id: user.id_usuario || user.id, email: user.email, rol: user.rol },
       process.env.JWT_SECRET || 'supersecretjwtkeyforpetalia',
       { expiresIn: '24h' }
     );
@@ -93,7 +111,8 @@ const login = async (req, res, next) => {
       user: {
         id: user.id_usuario,
         nombre: user.nombre,
-        email: user.email
+        email: user.email,
+        rol: user.rol
       }
     });
   } catch (error) {

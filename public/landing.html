@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Petalia - Cuidado Botánico Inteligente</title>
+  <meta name="description"
+    content="Gestiona tu colección de plantas exóticas, automatiza riegos y monitorea tu jardín interior en tiempo real.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0..1,0"
+    rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    // Si ya existe sesión iniciada, redirigir directo al App/Dashboard
+    const token = localStorage.getItem('petalia_jwt_token');
+    if (token) {
+      window.location.href = 'index.html';
+    }
+  </script>
+</head>
+
+<body style="background-color: #e2f5e7;">
+
+  <!-- Pantalla Inicial / Landing Page -->
+  <div id="landing-container" class="landing-container">
+    <header class="landing-header">
+      <div class="landing-logo">
+        <span class="material-symbols-rounded">yard</span>
+        <span>Petalia</span>
+      </div>
+      <div class="landing-nav-btns">
+        <button id="landing-to-login-btn" class="btn btn-secondary btn-sm">Iniciar Sesión</button>
+        <button id="landing-to-register-btn" class="btn btn-primary btn-sm">Registrarse</button>
+      </div>
+    </header>
+
+    <section class="landing-hero">
+      <div class="hero-content">
+        <h1>Tu jardín inteligente, simplificado</h1>
+        <p>Monitorea, automatiza y lleva el control del riego de tus plantas de forma profesional y sin esfuerzo. Mantén tu colección botánica sana y radiante.</p>
+        <div class="hero-actions">
+          <button id="hero-start-btn" class="btn btn-primary btn-lg">Comenzar Gratis</button>
+          <a href="#features" class="btn btn-secondary btn-lg">Conocer Más</a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <svg class="hero-plant-illustration" viewBox="0 0 200 200">
+          <path d="M100,160 C100,110 130,80 180,60 C145,110 110,125 100,160 Z" fill="#2ecc71" />
+          <path d="M100,160 C100,120 70,90 20,70 C55,120 90,130 100,160 Z" fill="#27ae60" />
+          <rect x="96" y="150" width="8" height="40" rx="4" fill="#27ae60" />
+        </svg>
+      </div>
+    </section>
+
+    <section id="features" class="landing-features">
+      <h2 class="section-title">¿Qué hace Petalia por ti?</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <span class="material-symbols-rounded feature-icon">forest</span>
+          <h3>Colección Personal</h3>
+          <p>Registra tus plantas con nombres afectivos, fechas de adquisición y fotos personalizadas.</p>
+        </div>
+        <div class="feature-card">
+          <span class="material-symbols-rounded feature-icon">water_drop</span>
+          <h3>Sincronización de Riego</h3>
+          <p>Calcula los días restantes de riego de forma automática según la especie y registra historiales.</p>
+        </div>
+        <div class="feature-card">
+          <span class="material-symbols-rounded feature-icon">calendar_month</span>
+          <h3>Calendario Interactivo</h3>
+          <p>Visualiza tus próximas tareas de riego y abono en una agenda semanal y mensual.</p>
+        </div>
+        <div class="feature-card">
+          <span class="material-symbols-rounded feature-icon">admin_panel_settings</span>
+          <h3>Seguridad y Control</h3>
+          <p>Tu información viaja encriptada y cuentas con herramientas para administrar tus datos de forma segura.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const toLoginBtn = document.getElementById('landing-to-login-btn');
+      const toRegisterBtn = document.getElementById('landing-to-register-btn');
+      const startBtn = document.getElementById('hero-start-btn');
+
+      if (toLoginBtn) {
+        toLoginBtn.addEventListener('click', () => {
+          window.location.href = 'index.html?mode=login';
+        });
+      }
+      if (toRegisterBtn) {
+        toRegisterBtn.addEventListener('click', () => {
+          window.location.href = 'index.html?mode=register';
+        });
+      }
+      if (startBtn) {
+        startBtn.addEventListener('click', () => {
+          window.location.href = 'index.html?mode=register';
+        });
+      }
+    });
+  </script>
+</body>
+
+</html>

@@ -8,10 +8,10 @@ class UserPlant {
      * @returns {Promise<Object>} La planta registrada.
      */
     static async create(data) {
-        const { id_usuario, id_catalogo, nombre_personalizado, fecha_adquisicion, fecha_ultimo_riego, favorita, estado, imagen_url, fecha_ultimo_abono } = data;
+        const { id_usuario, id_catalogo, nombre_personalizado, fecha_adquisicion, fecha_ultimo_riego, favorita, estado, imagen_url, fecha_ultimo_abono, descripcion_personal, frecuencia_riego_dias } = data;
         const sql = `
-            INSERT INTO plantas_usuario (id_usuario, id_catalogo, nombre_personalizado, fecha_adquisicion, fecha_ultimo_riego, favorita, estado, imagen_url, fecha_ultimo_abono)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO plantas_usuario (id_usuario, id_catalogo, nombre_personalizado, fecha_adquisicion, fecha_ultimo_riego, favorita, estado, imagen_url, fecha_ultimo_abono, descripcion_personal, frecuencia_riego_dias)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
         const [result] = await db.execute(sql, [
             id_usuario,
@@ -22,7 +22,9 @@ class UserPlant {
             favorita !== undefined ? favorita : false,
             estado || 'Activa',
             imagen_url || null,
-            fecha_ultimo_abono || fecha_adquisicion || null
+            fecha_ultimo_abono || fecha_adquisicion || null,
+            descripcion_personal || null,
+            frecuencia_riego_dias !== undefined ? (frecuencia_riego_dias === '' ? null : parseInt(frecuencia_riego_dias, 10)) : null
         ]);
         return {
             id_planta_usuario: result.insertId,
@@ -37,7 +39,9 @@ class UserPlant {
             favorita,
             estado,
             imagen_url,
-            fecha_ultimo_abono
+            fecha_ultimo_abono,
+            descripcion_personal,
+            frecuencia_riego_dias
         };
     }
 
@@ -58,7 +62,7 @@ class UserPlant {
                 cp.cuidados_basicos,
                 up.imagen_url AS imagen_url,
                 cp.imagen_url AS catalog_imagen_url, 
-                cp.frecuencia_riego_dias,
+                cp.frecuencia_riego_dias AS catalog_frecuencia_riego_dias,
                 cp.luz_recomendada,
                 cp.temperatura_min,
                 cp.temperatura_max
@@ -87,7 +91,7 @@ class UserPlant {
                 cp.cuidados_basicos,
                 up.imagen_url AS imagen_url,
                 cp.imagen_url AS catalog_imagen_url, 
-                cp.frecuencia_riego_dias,
+                cp.frecuencia_riego_dias AS catalog_frecuencia_riego_dias,
                 cp.luz_recomendada,
                 cp.temperatura_min,
                 cp.temperatura_max
@@ -106,7 +110,7 @@ class UserPlant {
      * @returns {Promise<Object>} La planta actualizada.
      */
     static async update(id_planta_usuario, data) {
-        const { nombre_personalizado, fecha_adquisicion, fecha_ultimo_riego, favorita, estado, imagen_url, fecha_ultimo_abono } = data;
+        const { nombre_personalizado, fecha_adquisicion, fecha_ultimo_riego, favorita, estado, imagen_url, fecha_ultimo_abono, descripcion_personal, frecuencia_riego_dias } = data;
 
         // Build dynamic query to avoid overwriting fields with undefined
         const fields = [];
@@ -119,6 +123,8 @@ class UserPlant {
         if (estado !== undefined) { fields.push('estado = ?'); values.push(estado); }
         if (imagen_url !== undefined) { fields.push('imagen_url = ?'); values.push(imagen_url); }
         if (fecha_ultimo_abono !== undefined) { fields.push('fecha_ultimo_abono = ?'); values.push(fecha_ultimo_abono); }
+        if (descripcion_personal !== undefined) { fields.push('descripcion_personal = ?'); values.push(descripcion_personal); }
+        if (frecuencia_riego_dias !== undefined) { fields.push('frecuencia_riego_dias = ?'); values.push(frecuencia_riego_dias === '' || frecuencia_riego_dias === null ? null : parseInt(frecuencia_riego_dias, 10)); }
 
         if (fields.length === 0) {
             return this.findById(id_planta_usuario);

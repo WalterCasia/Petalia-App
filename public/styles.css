@@ -426,6 +426,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  min-width: 0;
 }
 
 /* Unified Grids: 3 plants per row on desktop */
@@ -885,7 +886,7 @@ body {
 .plant-card-ref {
   width: 180px;
   flex-shrink: 0;
-  background-color: var(--bg-main);
+  background-color: #ffffff;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   overflow: hidden;
@@ -893,11 +894,12 @@ body {
   flex-direction: column;
   position: relative;
   transition: var(--transition);
+  box-shadow: var(--shadow-sm);
 }
 
 .plant-card-ref:hover {
   transform: translateY(-4px);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
 }
 
 .plant-card-ref-media {
@@ -905,67 +907,155 @@ body {
   width: 100%;
   position: relative;
   background-color: var(--border);
+  overflow: hidden;
 }
 
 .plant-card-ref-media img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.plant-card-ref:hover .plant-card-ref-media img {
+  transform: scale(1.04);
 }
 
 .media-badge-left {
   position: absolute;
   top: 8px;
   left: 8px;
-  background-color: rgba(255, 255, 255, 0.95);
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.9);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-muted);
-  font-size: 16px;
+  font-size: 14px;
   cursor: pointer;
   border: none;
-  box-shadow: none;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: var(--transition);
+  z-index: 2;
 }
 
 .media-badge-right-delete {
   position: absolute;
   top: 8px;
   right: 8px;
-  background-color: rgba(255, 255, 255, 0.95);
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ff3d00;
-  font-size: 16px;
-  cursor: pointer;
-  border: none;
-}
-
-.media-badge-status {
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
-  background-color: var(--healthy);
-  color: white;
-  width: 36px;
-  height: 36px;
+  background-color: rgba(255, 255, 255, 0.9);
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
-  border: 2px solid rgba(255,255,255,0.9);
+  color: #ff3d00;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: var(--transition);
+  z-index: 2;
+}
+
+.plant-card-ref:hover .media-badge-left,
+.plant-card-ref:hover .media-badge-right-delete {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.media-badge-status {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background-color: var(--healthy);
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  border: 1.5px solid rgba(255,255,255,0.9);
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  transition: var(--transition);
+  z-index: 2;
+}
+
+.media-badge-status:hover {
+  transform: scale(1.1);
 }
 
 .media-badge-status.critical-icon {
   background-color: var(--critical);
+}
+
+/* Indicadores de Tarjeta (Insignias Minimalistas) */
+.plant-ref-indicators-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 12px 0;
+}
+
+.plant-indicator-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.plant-indicator-pill span.material-symbols-rounded {
+  font-size: 12px;
+}
+
+.pill-ok {
+  background-color: var(--healthy-bg);
+  color: var(--primary);
+  border: 1px solid var(--healthy-border);
+}
+
+.pill-crit {
+  background-color: var(--critical-bg);
+  color: var(--critical);
+  border: 1px solid var(--critical-border);
+  animation: pulse-crit-pill 2s infinite ease-in-out;
+}
+
+@keyframes pulse-crit-pill {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+.pill-warning {
+  background-color: var(--warning-yellow-bg);
+  color: var(--warning-yellow);
+  border: 1px solid #fff59d;
+}
+
+.pill-info {
+  background-color: #f1f8e9;
+  color: #558b2f;
+  border: 1px solid #c5e1a5;
+}
+
+.pill-light {
+  background-color: #f5f5f5;
+  color: #616161;
+  border: 1px solid #e0e0e0;
 }
 
 .plant-card-ref-body {
@@ -1725,6 +1815,25 @@ body {
   border-color: var(--primary-light);
 }
 
+.form-group textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  outline: none;
+  font-family: inherit;
+  font-size: 14px;
+  background: #fbfdfb;
+  transition: var(--transition);
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-group textarea:focus {
+  border-color: var(--primary-light);
+  background: #ffffff;
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -2257,6 +2366,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  min-width: 0;
 }
 
 /* Unified Grids: 3 plants per row on desktop */
@@ -3132,3 +3242,475 @@ body {
     scroll-snap-align: start;
   }
 }
+
+/* ============================================================
+   LANDING PAGE STYLING (Tu jardin inteligente)
+   ============================================================ */
+.landing-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f0fdf4 0%, #e2f5e7 100%);
+  font-family: var(--font-family);
+  color: var(--text-main);
+  padding: 0 40px;
+}
+
+.landing-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.landing-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+
+.landing-logo .material-symbols-rounded {
+  font-size: 32px;
+  color: var(--primary);
+}
+
+.landing-nav-btns {
+  display: flex;
+  gap: 12px;
+}
+
+.landing-hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: center;
+  padding: 80px 0;
+}
+
+.hero-content h1 {
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--primary-dark);
+  margin-bottom: 24px;
+}
+
+.hero-content p {
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin-bottom: 36px;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.hero-actions a {
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  color: var(--primary-dark);
+  transition: var(--transition);
+}
+
+.hero-visual {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hero-plant-illustration {
+  width: 280px;
+  height: 280px;
+  filter: drop-shadow(0 16px 32px rgba(46, 125, 50, 0.15));
+  animation: floatPlant 4s ease-in-out infinite;
+}
+
+@keyframes floatPlant {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.landing-features {
+  padding: 60px 0 100px 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.section-title {
+  text-align: center;
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--primary-dark);
+  margin-bottom: 48px;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 32px;
+}
+
+.feature-card {
+  background: var(--bg-card);
+  padding: 32px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary-light);
+}
+
+.feature-icon {
+  font-size: 40px;
+  color: var(--primary);
+  margin-bottom: 16px;
+  display: inline-block;
+}
+
+.feature-card h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--primary-dark);
+}
+
+.feature-card p {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+@media (max-width: 768px) {
+  .landing-hero {
+    grid-template-columns: 1fr;
+    text-align: center;
+    padding: 40px 0;
+  }
+  .hero-actions {
+    justify-content: center;
+  }
+  .landing-container {
+    padding: 0 20px;
+  }
+  .hero-content h1 {
+    font-size: 36px;
+  }
+}
+
+/* ============================================================
+   ADMINISTRATOR PANEL STYLING
+   ============================================================ */
+.admin-tabs {
+  display: flex;
+  gap: 12px;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 24px;
+  padding-bottom: 2px;
+}
+
+.admin-tab-btn {
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-muted);
+  padding: 10px 16px;
+  cursor: pointer;
+  position: relative;
+  transition: var(--transition);
+}
+
+.admin-tab-btn:hover {
+  color: var(--primary);
+}
+
+.admin-tab-btn.active {
+  color: var(--primary-dark);
+}
+
+.admin-tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background-color: var(--primary);
+  border-radius: 2px;
+}
+
+.admin-table-container {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  margin-bottom: 24px;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.admin-table th {
+  background-color: var(--bg-main);
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.admin-table tbody tr:hover {
+  background-color: rgba(46, 125, 50, 0.03);
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.badge-admin {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.badge-user {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.admin-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-icon-admin {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-delete-admin {
+  color: #c62828;
+}
+.btn-delete-admin:hover {
+  background-color: #ffebee;
+}
+
+.btn-edit-admin {
+  color: #1565c0;
+}
+.btn-edit-admin:hover {
+  background-color: #e3f2fd;
+}
+
+.admin-form-box {
+  background: var(--bg-main);
+  border: 1px dashed var(--primary-light);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.admin-form-box h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--primary-dark);
+  margin-bottom: 16px;
+}
+
+/* --- ESTILOS DE LA SECCIÓN DE CATÁLOGO --- */
+.catalog-controls-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.2fr 1.2fr auto auto;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+}
+
+@media (max-width: 1024px) {
+  .catalog-controls-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .catalog-controls-grid button {
+    grid-column: span 1;
+  }
+}
+
+@media (max-width: 600px) {
+  .catalog-controls-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Catalog Card styling adjustments for premium feel */
+.catalog-card-item {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+  overflow: hidden;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+}
+
+.catalog-card-item:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--accent);
+}
+
+.catalog-card-item .plant-card-ref-media {
+  position: relative;
+  width: 100%;
+  padding-top: 65%; /* Consistent aspect ratio */
+  overflow: hidden;
+  background-color: var(--border);
+}
+
+.catalog-card-item .plant-card-ref-media img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.catalog-card-item:hover .plant-card-ref-media img {
+  transform: scale(1.08);
+}
+
+/* Insignias de toxicidad */
+.media-badge-left.toxicity-safe {
+  background-color: var(--healthy);
+}
+
+.media-badge-left.toxicity-poisonous {
+  background-color: var(--critical);
+}
+
+/* Clamp description to 2 lines elegantly */
+.catalog-desc-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Spinner loader animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Interactive button effects for catalog cards */
+.btn-catalog-details:hover {
+  background-color: var(--bg-main) !important;
+  color: var(--primary-dark) !important;
+}
+
+.btn-catalog-cuidar {
+  box-shadow: 0 4px 10px rgba(46, 125, 50, 0.15);
+}
+
+.btn-catalog-cuidar:hover {
+  box-shadow: 0 6px 14px rgba(46, 125, 50, 0.25);
+}
+
+/* Custom horizontal scrollbar for plants collection */
+.plants-scroll-container::-webkit-scrollbar {
+  height: 6px;
+}
+.plants-scroll-container::-webkit-scrollbar-track {
+  background: var(--bg-main);
+  border-radius: var(--radius-sm);
+}
+.plants-scroll-container::-webkit-scrollbar-thumb {
+  background: var(--primary-light);
+  border-radius: var(--radius-sm);
+}
+.plants-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+/* Two column grid layout for daily gardening tips card */
+.curiosidades-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  list-style: none;
+  padding: 0;
+  margin-top: 12px;
+  z-index: 1;
+}
+
+.curiosidades-list li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  background: rgba(255, 255, 255, 0.6);
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(46, 125, 50, 0.08);
+}
+
+.curiosidades-list li span:last-child {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-main);
+}
+
+.curiosidades-list .curio-icon {
+  font-size: 20px;
+  color: var(--primary);
+  background: var(--healthy-bg);
+  padding: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Constrain input group as suggestions anchor */
+.input-group {
+  position: relative;
+}
+
+@media (max-width: 576px) {
+  .curiosidades-list {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
